@@ -3,9 +3,10 @@
 import os
 import re
 import time
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 from .fsutil import read_str
+from .steamapps import SteamLibrary
 
 KTHREADD_PID = 2
 SORT_KEYS = ("name", "cpu", "mem")
@@ -13,6 +14,12 @@ CMD_MAX = 300
 MAX_MEMBERS = 50
 DECKY_TITLE = re.compile(r"^(.+?) \((/.*/plugins/[^/]+/main\.py)\)$")
 WINDOWS_PATH = re.compile(r"^[A-Za-z]:[\\/]")
+GROUP_MODES = ("app", "name", "none")
+# Precedence matters: SteamAppId is 0 for non-Steam shortcuts, which only set SteamGameId.
+APP_ENV_KEYS = ("SteamAppId", "STEAM_COMPAT_APP_ID", "SteamGameId")
+APP_ENV_KEYS_B = tuple(k.encode() for k in APP_ENV_KEYS)
+APP_ID_ARG = re.compile(r"(?:^|\s)AppId=(\d+)")
+ENVIRON_MAX = 65536
 
 ProcKey = Tuple[int, int]  # (pid, starttime) uniquely identifies a process across PID reuse
 
@@ -85,27 +92,55 @@ def _name_from_cmdline(raw: Optional[bytes], comm: str) -> Tuple[str, str]:
     return _display_name(argv[0], comm), cmd[:CMD_MAX]
 
 
+def _app_id_from_environ(raw: Optional[bytes]) -> Optional[int]:
+    if not raw:
+        return None
+    env: Dict[str, str] = {}
+    for entry in raw.split(b"\0"):
+        key, sep, value = entry.partition(b"=")
+        if sep and key in APP_ENV_KEYS_B:
+            env[key.decode()] = value.decode("ascii", "replace")
+    for key in APP_ENV_KEYS:
+        try:
+            value = int(env.get(key, "0"))
+        except ValueError:
+            continue
+        if value:
+            return value
+    return None
+
+
+def _app_id_from_cmd(cmd: str) -> Optional[int]:
+    match = APP_ID_ARG.search(cmd)
+    return int(match.group(1)) if match and int(match.group(1)) else None
+
+
 class ProcessSampler:
-    def __init__(self, root: str = "/", clock=time.monotonic):
+    def __init__(self, root: str = "/", clock=time.monotonic, steam_dirs: Optional[List[str]] = None):
         self.root = root
         self.clock = clock
         self.clk_tck = _sysconf("SC_CLK_TCK", 100)
         self.page_size = _sysconf("SC_PAGE_SIZE", 4096)
         self.cpu_count = os.cpu_count() or 1
+        self.library = SteamLibrary(root, steam_dirs)
         self._prev: Dict[ProcKey, int] = {}
         self._prev_time: Optional[float] = None
-        self._names: Dict[ProcKey, Tuple[str, str]] = {}
+        # (name, cmd, own app id) per process, read once (spec 003 NFR-1, spec 006 NFR-1)
+        self._info: Dict[ProcKey, Tuple[str, str, Optional[int]]] = {}
         self._mem_total_kb: Optional[int] = None
 
     def _p(self, *parts: str) -> str:
         return os.path.join(self.root, *parts)
 
-    def _read_cmdline(self, pid: int) -> Optional[bytes]:
+    def _read_bytes(self, pid: int, name: str, size: int) -> Optional[bytes]:
         try:
-            with open(self._p("proc", str(pid), "cmdline"), "rb") as f:
-                return f.read(4096)
+            with open(self._p("proc", str(pid), name), "rb") as f:
+                return f.read(size)
         except OSError:
-            return None
+            return None  # gone, or another user's process (environ)
+
+    def _read_cmdline(self, pid: int) -> Optional[bytes]:
+        return self._read_bytes(pid, "cmdline", 4096)
 
     def _mem_total(self) -> int:
         if self._mem_total_kb is None:
@@ -143,8 +178,11 @@ class ProcessSampler:
         descending: bool = True,
         limit: int = 40,
         include_kernel: bool = False,
-        group: bool = False,
+        group: Union[bool, str] = False,
     ) -> dict:
+        mode = {True: "name", False: "none"}.get(group, group) if isinstance(group, bool) else group
+        if mode not in GROUP_MODES:
+            mode = "none"
         if sort_key not in SORT_KEYS:
             sort_key = "cpu"
         now = self.clock()
@@ -167,17 +205,22 @@ class ProcessSampler:
             if prev_ticks is not None and cpu_scale:
                 cpu = max(0.0, (st["ticks"] - prev_ticks) * cpu_scale)
 
-            names = self._names.get(key)
-            if names is None:
-                cmdline = None if is_kernel else self._read_cmdline(st["pid"])
-                names = _name_from_cmdline(cmdline, st["comm"])
-                self._names[key] = names
+            info = self._info.get(key)
+            if info is None:
+                if is_kernel:
+                    info = (st["comm"], "", None)
+                else:
+                    name, cmd = _name_from_cmdline(self._read_cmdline(st["pid"]), st["comm"])
+                    app_id = _app_id_from_environ(self._read_bytes(st["pid"], "environ", ENVIRON_MAX))
+                    info = (name, cmd, app_id or _app_id_from_cmd(cmd))
+                self._info[key] = info
 
             mem_kb = st["rss_pages"] * self.page_size / 1024
             rows.append({
                 "pid": st["pid"],
-                "name": names[0],
-                "cmd": names[1],
+                "name": info[0],
+                "cmd": info[1],
+                "app_id": info[2],
                 "cpu": round(min(cpu, 100.0), 1),
                 "mem_mb": round(mem_kb / 1024, 1),
                 "mem_percent": round(mem_kb * 100 / mem_total_kb, 1) if mem_total_kb else None,
@@ -187,12 +230,18 @@ class ProcessSampler:
             })
 
         self._prev = current
-        for key in list(self._names):
+        for key in list(self._info):
             if key not in current:
-                del self._names[key]
+                del self._info[key]
 
+        _inherit_app_ids(rows)
         process_count = len(rows)
-        items = _group(rows) if group else [_single(r) for r in rows]
+        if mode == "app":
+            items = self._group_by_app(rows)
+        elif mode == "name":
+            items = _group(rows)
+        else:
+            items = [_single(r) for r in rows]
         _sort(items, sort_key, descending)
 
         limit = max(1, int(limit))
@@ -205,6 +254,45 @@ class ProcessSampler:
             "processes": items[:limit],
         }
 
+    def _group_by_app(self, rows: List[dict]) -> List[dict]:
+        """One item per running game; everything else grouped by name (spec 006)."""
+        by_app: Dict[int, List[dict]] = {}
+        rest = []
+        for row in rows:
+            if row["app_id"]:
+                by_app.setdefault(row["app_id"], []).append(row)
+            else:
+                rest.append(row)
+
+        items = _group(rest)
+        for app_id, members in by_app.items():
+            main = max(members, key=lambda r: (r["mem_mb"], -r["pid"]))
+            item = _merge(members, main, f"app:{app_id}", "game")
+            item["name"] = self.library.game_name(app_id) or main["name"]
+            items.append(item)
+        return items
+
+
+def _inherit_app_ids(rows: List[dict]) -> None:
+    """Processes without their own AppID take the nearest ancestor's (spec 006 FR-1.3)."""
+    by_pid = {r["pid"]: r for r in rows}
+    resolved: Dict[int, Optional[int]] = {}
+
+    def resolve(pid: int, depth: int = 0) -> Optional[int]:
+        if pid in resolved:
+            return resolved[pid]
+        row = by_pid.get(pid)
+        app_id = None
+        if row is not None:
+            app_id = row["app_id"]
+            if not app_id and depth < 64 and row["ppid"] > 1:
+                app_id = resolve(row["ppid"], depth + 1)
+        resolved[pid] = app_id
+        return app_id
+
+    for row in rows:
+        row["app_id"] = resolve(row["pid"])
+
 
 def _sort(items: List[dict], sort_key: str, descending: bool) -> None:
     if sort_key == "name":
@@ -216,7 +304,24 @@ def _sort(items: List[dict], sort_key: str, descending: bool) -> None:
 
 
 def _single(row: dict) -> dict:
-    return {**row, "key": f"pid:{row['pid']}", "count": 1, "members": []}
+    return {**row, "key": f"pid:{row['pid']}", "kind": "process", "count": 1, "members": []}
+
+
+def _merge(members: List[dict], main: dict, key: str, kind: str) -> dict:
+    """Summed usage of `members`; identity fields come from `main`."""
+    mem_percents = [m["mem_percent"] for m in members if m["mem_percent"] is not None]
+    ordered = sorted(members, key=lambda r: (r["cpu"], r["mem_mb"]), reverse=True)
+    return {
+        **main,
+        "key": key,
+        "kind": kind,
+        "count": len(members),
+        "cpu": round(min(sum(m["cpu"] for m in members), 100.0), 1),
+        "mem_mb": round(sum(m["mem_mb"] for m in members), 1),
+        "mem_percent": round(sum(mem_percents), 1) if mem_percents else None,
+        "threads": sum(m["threads"] for m in members),
+        "members": ordered[:MAX_MEMBERS] if len(members) > 1 else [],
+    }
 
 
 def _group(rows: List[dict]) -> List[dict]:
@@ -229,18 +334,7 @@ def _group(rows: List[dict]) -> List[dict]:
     for name, members in by_name.items():
         if len(members) == 1:
             items.append(_single(members[0]))
-            continue
-        main = min(members, key=lambda r: r["pid"])
-        mem_percents = [m["mem_percent"] for m in members if m["mem_percent"] is not None]
-        members.sort(key=lambda r: (r["cpu"], r["mem_mb"]), reverse=True)
-        items.append({
-            **main,
-            "key": f"name:{name}",
-            "count": len(members),
-            "cpu": round(min(sum(m["cpu"] for m in members), 100.0), 1),
-            "mem_mb": round(sum(m["mem_mb"] for m in members), 1),
-            "mem_percent": round(sum(mem_percents), 1) if mem_percents else None,
-            "threads": sum(m["threads"] for m in members),
-            "members": members[:MAX_MEMBERS],
-        })
+        else:
+            main = min(members, key=lambda r: r["pid"])
+            items.append(_merge(members, main, f"name:{name}", "group"))
     return items

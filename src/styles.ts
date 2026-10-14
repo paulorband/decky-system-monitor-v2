@@ -76,4 +76,9 @@ export const GROUP_CSS = `
 .ssm-member .ssm-td { font-size: 13px; padding-top: 5px; padding-bottom: 5px; }
 .ssm-member .ssm-name { font-weight: 400; color: #b8bcbf; }
 .ssm-member-last { margin-bottom: 6px; }
+
+/* Game grouping (spec 006) */
+.ssm-game-badge { display: inline-block; margin-right: 8px; padding: 0 6px; border-radius: 4px; font-size: 11px;
+  font-weight: 800; letter-spacing: 0.06em; background: #5ed47a; color: #10161c; vertical-align: 2px; }
+.ssm-row-game:not(.ssm-row-focus) { background: rgba(94,212,122,0.10); }
 `;

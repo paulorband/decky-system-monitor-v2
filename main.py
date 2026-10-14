@@ -10,12 +10,15 @@ if _PY_MODULES not in sys.path:
 
 from sysmon.metrics import MetricsCollector  # noqa: E402
 from sysmon.processes import ProcessSampler  # noqa: E402
+from sysmon.steamapps import default_steam_dirs  # noqa: E402
 
 
 class Plugin:
     async def _main(self):
         self.metrics = MetricsCollector()
-        self.processes = ProcessSampler()
+        # Decky may run plugins with a different HOME; it tells us the Steam user's home.
+        home = getattr(decky, "DECKY_USER_HOME", None) or os.path.expanduser("~")
+        self.processes = ProcessSampler(steam_dirs=default_steam_dirs(home))
         decky.logger.info("System Monitor loaded")
 
     async def _unload(self):
@@ -34,7 +37,7 @@ class Plugin:
         descending: bool = True,
         limit: int = 40,
         include_kernel: bool = False,
-        group: bool = False,
+        group="app",  # "app" | "name" | "none" (bool accepted, spec 005)
     ) -> dict:
         try:
             return self.processes.sample(sort_key, descending, limit, include_kernel, group)

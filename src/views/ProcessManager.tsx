@@ -1,6 +1,6 @@
 import { DialogButton, Focusable } from "@decky/ui";
 import { Fragment, useState } from "react";
-import { SortKey, getMetrics, getProcesses } from "../api";
+import { GroupMode, SortKey, getMetrics, getProcesses } from "../api";
 import { MemberRow, ProcessRow, ProcessTableHeader } from "../components/ProcessTable";
 import { COLORS, fmtMb, fmtPct, loadColor } from "../format";
 import { usePolling } from "../hooks/usePolling";
@@ -12,12 +12,14 @@ const PAGE_SIZE = 40;
 const REFRESH_MS = 2000;
 const SORT_CYCLE: SortKey[] = ["cpu", "mem", "name"];
 const SORT_LABELS: Record<SortKey, string> = { cpu: "CPU", mem: "RAM", name: "Nome" };
+const GROUP_CYCLE: GroupMode[] = ["app", "name", "none"];
+const GROUP_LABELS: Record<GroupMode, string> = { app: "Agrupar: jogos", name: "Agrupar: nome", none: "Sem grupos" };
 
 export function ProcessManager() {
   const [sortKey, setSortKey] = usePersistentState<SortKey>("procSort", "cpu");
   const [descending, setDescending] = usePersistentState<boolean>("procDesc", true);
   const [includeKernel, setIncludeKernel] = usePersistentState<boolean>("procKernel", false);
-  const [grouped, setGrouped] = usePersistentState<boolean>("procGroup", true);
+  const [groupMode, setGroupMode] = usePersistentState<GroupMode>("procGroupMode", "app");
   const [limit, setLimit] = useState(PAGE_SIZE);
   const [paused, setPaused] = useState(false);
   // Keyed by item key ("name:x" / "pid:n") so open rows survive reordering.
@@ -27,7 +29,7 @@ export function ProcessManager() {
   const { data, error } = usePolling(
     async () => {
       const [procs, metrics] = await Promise.all([
-        getProcesses(sortKey, descending, limit, includeKernel, grouped),
+        getProcesses(sortKey, descending, limit, includeKernel, groupMode),
         getMetrics(),
       ]);
       recordMetrics(metrics);
@@ -35,7 +37,7 @@ export function ProcessManager() {
     },
     REFRESH_MS,
     !paused,
-    [sortKey, descending, limit, includeKernel, grouped],
+    [sortKey, descending, limit, includeKernel, groupMode],
   );
 
   // Any change to what is listed resumes updates, so the user sees the new order.
@@ -56,7 +58,7 @@ export function ProcessManager() {
     setPaused(false);
   };
   const toggleGrouped = () => {
-    setGrouped(!grouped);
+    setGroupMode(GROUP_CYCLE[(GROUP_CYCLE.indexOf(groupMode) + 1) % GROUP_CYCLE.length]);
     setOpenGroup(null);
     setPaused(false);
   };
@@ -85,7 +87,7 @@ export function ProcessManager() {
               <span className="ssm-muted">Processos </span>
               <b>{procs?.process_count ?? "—"}</b>
             </span>
-            {grouped && procs && (
+            {groupMode !== "none" && procs && (
               <span>
                 <span className="ssm-muted">Grupos </span>
                 <b>{procs.total}</b>
@@ -110,7 +112,7 @@ export function ProcessManager() {
             {paused ? "▶ Retomar" : "❚❚ Pausar"}
           </DialogButton>
           <DialogButton className="ssm-tool-btn" onClick={toggleGrouped}>
-            {grouped ? "Desagrupar" : "Agrupar"}
+            {GROUP_LABELS[groupMode]}
           </DialogButton>
           <DialogButton className="ssm-tool-btn" onClick={toggleKernel}>
             {includeKernel ? "Ocultar kernel" : "Mostrar kernel"}

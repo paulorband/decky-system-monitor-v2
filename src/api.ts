@@ -62,6 +62,7 @@ export const getMetrics = callable<[], Metrics>("get_metrics");
 
 // Mirrors the get_processes() contract (specs/003-gerenciador-processos).
 export type SortKey = "name" | "cpu" | "mem";
+export type GroupMode = "app" | "name" | "none";
 
 export interface ProcessInfo {
   pid: number;
@@ -73,11 +74,14 @@ export interface ProcessInfo {
   threads: number;
   state: string;
   ppid: number;
+  /** Steam AppID the process belongs to (own or inherited), spec 006. */
+  app_id: number | null;
 }
 
 /** A process, or a group of same-named processes (specs/005-agrupamento-processos). */
 export interface ProcessItem extends ProcessInfo {
   key: string;
+  kind: "game" | "group" | "process";
   count: number;
   members: ProcessInfo[];
 }
@@ -91,4 +95,4 @@ export interface ProcessList {
   processes: ProcessItem[];
 }
 
-export const getProcesses = callable<[SortKey, boolean, number, boolean, boolean], ProcessList>("get_processes");
+export const getProcesses = callable<[SortKey, boolean, number, boolean, GroupMode], ProcessList>("get_processes");

@@ -82,15 +82,16 @@ export function ProcessRow({ item, index, expanded, onToggle }: RowProps) {
   const isGroup = item.count > 1;
   return (
     <Focusable
-      className={`ssm-row${index % 2 ? " ssm-row-odd" : ""}${isGroup && expanded ? " ssm-row-open" : ""}`}
+      className={`ssm-row${index % 2 ? " ssm-row-odd" : ""}${isGroup && expanded ? " ssm-row-open" : ""}${item.kind === "game" ? " ssm-row-game" : ""}`}
       focusClassName="ssm-row-focus"
       noFocusRing
       onActivate={() => onToggle(item.key)}
-      onOKActionDescription={expanded ? "Recolher" : isGroup ? "Ver instâncias" : "Detalhes"}
+      onOKActionDescription={expanded ? "Recolher" : item.kind === "game" && isGroup ? "Ver processos do jogo" : isGroup ? "Ver instâncias" : "Detalhes"}
     >
       <div className="ssm-tr">
         <div className="ssm-td ssm-name">
           {isGroup && <span className="ssm-caret">{expanded ? "▾" : "▸"}</span>}
+          {item.kind === "game" && <span className="ssm-game-badge">JOGO</span>}
           {item.name}
           {isGroup && <span className="ssm-badge">×{item.count}</span>}
         </div>

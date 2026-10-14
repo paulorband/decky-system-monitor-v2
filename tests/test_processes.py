@@ -122,7 +122,7 @@ class ProcessSamplerTest(unittest.TestCase):
         self.clock.t += 1
         result = self.sampler.sample(limit=100)
         self.assertNotIn(600, self.by_pid(result))
-        self.assertNotIn((600, 1000), self.sampler._names)
+        self.assertNotIn((600, 1000), self.sampler._info)
 
     def test_pid_reuse_does_not_inherit_ticks(self):
         self.sampler.sample(limit=100)
