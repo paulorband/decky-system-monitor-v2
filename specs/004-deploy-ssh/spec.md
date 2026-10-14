@@ -1,6 +1,6 @@
 # Spec 004 — Deploy via SSH
 
-- **Status:** Concluída — deploy validado no Ally X; pendente: AC-5 (`--logs`)
+- **Status:** Concluída — validada no Ally X
 - **Depende de:** 000
 
 ## Contexto
@@ -35,7 +35,7 @@ Precisamos de um comando único que compile, envie e recarregue o plugin no apar
 - [x] **AC-2** Sem `DECK_HOST`, o deploy aborta com mensagem orientando a criar `.env.deploy`.
 - [x] **AC-3** `--help` lista as opções.
 - [x] **AC-4** `pnpm run deploy:ssh` instala no Ally X e o plugin aparece no QAM após o restart. _(validado no Ally X, 2026-10-14)_
-- [ ] **AC-5** `--logs` mostra o log do Decky. _(validar no aparelho)_
+- [x] **AC-5** `--logs` mostra o log do Decky. _(validado no Ally X, 2026-10-14)_
 
 ## Design
 - `scripts/deploy.sh` — orquestra local; `scripts/remote-install.sh` — enviado junto e executado com `sudo` no aparelho.
