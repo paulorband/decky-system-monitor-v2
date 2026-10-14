@@ -28,6 +28,6 @@ Alvos: SteamOS (Steam Deck LCD/OLED), Bazzite e CachyOS Handheld (ROG Ally / All
 - Barras e sparklines para tendência; nunca só cor (sempre acompanhada de número).
 
 ## V. Qualidade verificável
-- Lógica de parsing no backend é testável com uma raiz falsa de `/proc`/`/sys` (`tests/fixtures`).
+- Lógica de parsing no backend é testável com uma raiz falsa de `/proc`/`/sys` (`tests/fakefs.py`).
 - `pnpm build` e `pnpm typecheck` devem passar antes de cada commit.
 - Um commit por spec concluída.

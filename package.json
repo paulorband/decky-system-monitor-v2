@@ -9,8 +9,9 @@
     "watch": "rollup -c -w",
     "typecheck": "tsc --noEmit",
     "test:py": "uv run --no-project --python 3.11 python -m unittest discover -s tests -v",
-    "deploy": "bash scripts/deploy.sh",
-    "package": "bash scripts/deploy.sh --package-only"
+    "deploy:ssh": "node scripts/bash.mjs scripts/deploy.sh",
+    "deploy:logs": "node scripts/bash.mjs scripts/deploy.sh --logs",
+    "package": "node scripts/bash.mjs scripts/deploy.sh --package-only"
   },
   "devDependencies": {
     "@decky/rollup": "^1.0.2",
