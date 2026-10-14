@@ -53,8 +53,9 @@ e permitir trocar manualmente. Adicionar um idioma novo deve exigir só um arqui
 
 ## Design
 - `rollup.config.js` — plugin `ssm-locales` resolve `virtual:locales` lendo `src/locales/*.json` (com watch).
+- `src/i18n-match.ts` — `matchLanguage()` puro (sem imports), testado pelo `check-locales.mjs` via Node.
 - `src/i18n.ts` — `initI18n()` (chamado no `definePlugin`), `setLanguagePreference()`, `t()`, `useI18n()`,
-  `fmtNumber()`, `matchLanguage()`.
+  `fmtNumber()`.
 - `src/format.ts` — usa `fmtNumber` e `t` para status de bateria e ventoinhas.
 - `scripts/check-locales.mjs` — validação de FR-9.
 
