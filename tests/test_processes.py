@@ -1,7 +1,36 @@
 import unittest
 
 from fakefs import FakeFS
-from sysmon.processes import ProcessSampler
+from sysmon.processes import ProcessSampler, _display_name, _name_from_cmdline
+
+
+class DisplayNameTest(unittest.TestCase):  # spec 003 FR-4, AC-9..AC-12
+    def test_decky_plugin_title(self):
+        title = "System Monitor (/home/deck/homebrew/plugins/steam-system-monitor/main.py)"
+        self.assertEqual(_display_name(title, "python3"), "Decky: System Monitor")
+
+    def test_proc_self_exe_uses_comm(self):
+        self.assertEqual(_display_name("/proc/self/exe", "pv-adverb"), "pv-adverb")
+
+    def test_chromium_style_title(self):
+        argv0 = "/home/deck/.local/share/Steam/ubuntu12_64/steamwebhelper --type=renderer --lang=pt-BR"
+        self.assertEqual(_display_name(argv0, "steamwebhelper"), "steamwebhelper")
+
+    def test_windows_paths(self):
+        self.assertEqual(_display_name("C:\\Games\\game.exe", "game.exe"), "game.exe")
+        self.assertEqual(
+            _display_name("Z:\\home\\deck\\Elden Ring\\Game\\eldenring.exe -flag", "eldenring.exe"),
+            "eldenring.exe",
+        )
+
+    def test_plain_and_retitled(self):
+        self.assertEqual(_display_name("/usr/bin/gamescope", "gamescope"), "gamescope")
+        self.assertEqual(_display_name("bash", "bash"), "bash")
+        self.assertEqual(_display_name("sshd: deck@pts/0", "sshd"), "sshd")
+
+    def test_cmdline_is_split_on_nul(self):
+        name, cmd = _name_from_cmdline(b"/usr/bin/gamescope\0-e\0--steam\0", "gamescope")
+        self.assertEqual((name, cmd), ("gamescope", "/usr/bin/gamescope -e --steam"))
 
 
 def stat_line(pid, comm, ppid, ticks, rss_pages, state="S", threads=1, starttime=1000):

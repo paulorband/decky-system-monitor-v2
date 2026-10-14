@@ -1,6 +1,7 @@
 """Per-process CPU and memory sampling from /proc (spec 003)."""
 
 import os
+import re
 import time
 from typing import Dict, List, Optional, Tuple
 
@@ -10,6 +11,8 @@ KTHREADD_PID = 2
 SORT_KEYS = ("name", "cpu", "mem")
 CMD_MAX = 300
 MAX_MEMBERS = 50
+DECKY_TITLE = re.compile(r"^(.+?) \((/.*/plugins/[^/]+/main\.py)\)$")
+WINDOWS_PATH = re.compile(r"^[A-Za-z]:[\\/]")
 
 ProcKey = Tuple[int, int]  # (pid, starttime) uniquely identifies a process across PID reuse
 
@@ -45,6 +48,32 @@ def _parse_stat(text: str) -> Optional[dict]:
         return None
 
 
+def _display_name(argv0: str, comm: str) -> str:
+    """Pick a readable process name from argv[0] (spec 003, FR-4)."""
+    # Decky Loader retitles each plugin process as "<Plugin name> (<plugin dir>/main.py)".
+    match = DECKY_TITLE.match(argv0)
+    if match:
+        return f"Decky: {match.group(1)}"
+    # Re-exec through /proc/self/exe (pressure-vessel, bwrap...): argv[0] says nothing useful.
+    if argv0.startswith("/proc/"):
+        return comm
+    # Windows path (Wine/Proton): may contain spaces, so cut right after the ".exe".
+    if WINDOWS_PATH.match(argv0):
+        exe = argv0[:argv0.lower().find(".exe") + 4] if ".exe" in argv0.lower() else argv0
+        return _basename(exe) or comm
+    # Linux path; Chromium-style titles append the arguments ("/x/steamwebhelper --type=...").
+    if argv0.startswith("/"):
+        return _basename(argv0.split(" ")[0]) or comm
+    # Other rewritten titles ("sshd: user@pts/0") are not executable names.
+    if " " in argv0:
+        return comm
+    return _basename(argv0) or comm
+
+
+def _basename(path: str) -> str:
+    return path.replace("\\", "/").rstrip("/").split("/")[-1]
+
+
 def _name_from_cmdline(raw: Optional[bytes], comm: str) -> Tuple[str, str]:
     if not raw:
         return comm, ""
@@ -52,12 +81,8 @@ def _name_from_cmdline(raw: Optional[bytes], comm: str) -> Tuple[str, str]:
     if not args:
         return comm, ""
     argv = [a.decode("utf-8", "replace") for a in args]
-    exe = argv[0].replace("\\", "/").rstrip("/").split("/")[-1]
-    # Some programs rewrite argv[0] to a long title ("sshd: user@pts/0"); keep comm then.
-    if not exe or " " in exe:
-        exe = comm
     cmd = " ".join(argv)
-    return exe, cmd[:CMD_MAX]
+    return _display_name(argv[0], comm), cmd[:CMD_MAX]
 
 
 class ProcessSampler:

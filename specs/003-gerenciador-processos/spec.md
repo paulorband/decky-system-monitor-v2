@@ -25,7 +25,12 @@ Precisamos de uma tela cheia, estilo gerenciador de tarefas, navegável 100% pel
 - **FR-2 CPU %** = Δ(utime+stime) / (Δtempo × CLK_TCK × nº de CPUs) × 100 — percentual da máquina inteira
   (0–100, como o Gerenciador de Tarefas do Windows). Primeira amostra de um processo retorna 0.
 - **FR-3 RAM** = RSS (`/proc/[pid]/stat` campo 24 × tamanho de página), em MB e % da RAM total.
-- **FR-4 Nome** = basename de `argv[0]` (aceita `/` e `\` — processos Wine/Proton), senão `comm`.
+- **FR-4 Nome**, a partir de `argv[0]`, nesta ordem:
+  1. Título de plugin do Decky `Nome (…/plugins/<dir>/main.py)` → `Decky: Nome` (cada plugin roda num processo próprio);
+  2. `/proc/self/exe` (re-exec de pressure-vessel/bwrap) → `comm`;
+  3. caminho Windows (`C:\…`, Wine/Proton, pode ter espaços) → basename até o `.exe`;
+  4. caminho Linux → basename do primeiro token (títulos estilo Chromium anexam argumentos);
+  5. outro título com espaço (`sshd: deck@pts/0`) → `comm`; senão basename de `argv[0]`.
 - **FR-5** Threads de kernel (filhos de `kthreadd`, PID 2) ficam ocultas por padrão.
 - **FR-6 Tela:** rota cheia `/steam-system-monitor/processes`, aberta pelo botão do dashboard.
   Tabela com colunas **Processo | PID | CPU | RAM**, cabeçalho fixo e linhas zebradas.
@@ -55,6 +60,10 @@ Precisamos de uma tela cheia, estilo gerenciador de tarefas, navegável 100% pel
 - [ ] **AC-6** Na tela, D-pad navega cabeçalho → linhas → "Mostrar mais"; A no cabeçalho ordena/inverte. _(validar no aparelho)_
 - [ ] **AC-7** X alterna coluna, Y pausa, B volta. _(validar no aparelho)_
 - [x] **AC-8** `pnpm test:py`, `pnpm typecheck` e `pnpm build` passam.
+- [x] **AC-9** Plugins do Decky aparecem como `Decky: <nome do plugin>` (antes: todos `main.py)`, visto no Ally X).
+- [x] **AC-10** `argv[0]=/proc/self/exe` usa `comm` (antes: grupo `exe`).
+- [x] **AC-11** `…/steamwebhelper --type=renderer` aparece como `steamwebhelper`.
+- [x] **AC-12** `Z:\…\Elden Ring\Game\eldenring.exe -flag` aparece como `eldenring.exe`.
 
 ## Design
 - `py_modules/sysmon/processes.py` — `ProcessSampler(root="/")` com estado da amostra anterior
