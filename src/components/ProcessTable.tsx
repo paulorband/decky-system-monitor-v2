@@ -1,16 +1,13 @@
 import { Focusable } from "@decky/ui";
 import { ProcessInfo, ProcessItem, SortKey } from "../api";
 import { fmtMb, fmtPct, loadColor } from "../format";
+import { t } from "../i18n";
 
-const STATE_LABELS: Record<string, string> = {
-  R: "Executando",
-  S: "Dormindo",
-  D: "Aguardando E/S",
-  Z: "Zumbi",
-  T: "Parado",
-  t: "Rastreado",
-  I: "Ocioso",
-};
+function stateLabel(state: string): string {
+  const key = `proc.state.${state}`;
+  const label = t(key);
+  return label === key ? state : label;
+}
 
 interface HeaderProps {
   sortKey: SortKey;
@@ -27,7 +24,7 @@ function HeaderCell({ label, k, align, props }: { label: string; k: SortKey; ali
       noFocusRing
       style={align ? { justifyContent: "flex-end" } : undefined}
       onActivate={() => props.onSort(k)}
-      onOKActionDescription={active ? "Inverter ordem" : `Ordenar por ${label}`}
+      onOKActionDescription={active ? t("proc.reverse") : t("proc.sortBy", { column: label })}
     >
       {label}
       <span className="ssm-th-arrow">{active ? (props.descending ? "▼" : "▲") : ""}</span>
@@ -38,7 +35,7 @@ function HeaderCell({ label, k, align, props }: { label: string; k: SortKey; ali
 export function ProcessTableHeader(props: HeaderProps) {
   return (
     <Focusable flow-children="row" className="ssm-tr ssm-thead">
-      <HeaderCell label="Processo" k="name" props={props} />
+      <HeaderCell label={t("proc.colProcess")} k="name" props={props} />
       <div className="ssm-th ssm-num">PID</div>
       <HeaderCell label="CPU" k="cpu" align="right" props={props} />
       <HeaderCell label="RAM" k="mem" align="right" props={props} />
@@ -60,7 +57,7 @@ function Details({ p }: { p: ProcessInfo }) {
     <div className="ssm-row-details">
       {p.cmd && <div className="ssm-cmd">{p.cmd}</div>}
       <div className="ssm-stats">
-        <span className="ssm-stat"><span>Estado</span><b>{STATE_LABELS[p.state] ?? p.state}</b></span>
+        <span className="ssm-stat"><span>{t("proc.state")}</span><b>{stateLabel(p.state)}</b></span>
         <span className="ssm-stat"><span>PPID</span><b>{p.ppid}</b></span>
         <span className="ssm-stat"><span>Threads</span><b>{p.threads}</b></span>
         <span className="ssm-stat"><span>RAM</span><b>{fmtPct(p.mem_percent, 1)}</b></span>
@@ -86,16 +83,18 @@ export function ProcessRow({ item, index, expanded, onToggle }: RowProps) {
       focusClassName="ssm-row-focus"
       noFocusRing
       onActivate={() => onToggle(item.key)}
-      onOKActionDescription={expanded ? "Recolher" : item.kind === "game" && isGroup ? "Ver processos do jogo" : isGroup ? "Ver instâncias" : "Detalhes"}
+      onOKActionDescription={t(
+        expanded ? "common.collapse" : item.kind === "game" && isGroup ? "proc.viewGame" : isGroup ? "proc.viewInstances" : "common.details",
+      )}
     >
       <div className="ssm-tr">
         <div className="ssm-td ssm-name">
           {isGroup && <span className="ssm-caret">{expanded ? "▾" : "▸"}</span>}
-          {item.kind === "game" && <span className="ssm-game-badge">JOGO</span>}
+          {item.kind === "game" && <span className="ssm-game-badge">{t("proc.game")}</span>}
           {item.name}
           {isGroup && <span className="ssm-badge">×{item.count}</span>}
         </div>
-        <div className="ssm-td ssm-num ssm-muted">{isGroup ? `${item.count} proc.` : item.pid}</div>
+        <div className="ssm-td ssm-num ssm-muted">{isGroup ? t("proc.count", { count: item.count }) : item.pid}</div>
         <CpuCell cpu={item.cpu} />
         <div className="ssm-td ssm-num">{fmtMb(item.mem_mb)}</div>
       </div>
@@ -118,7 +117,7 @@ export function MemberRow({ p, last, expanded, onToggle }: MemberProps) {
       focusClassName="ssm-row-focus"
       noFocusRing
       onActivate={() => onToggle(`pid:${p.pid}`)}
-      onOKActionDescription={expanded ? "Recolher" : "Detalhes"}
+      onOKActionDescription={t(expanded ? "common.collapse" : "common.details")}
     >
       <div className="ssm-tr">
         <div className="ssm-td ssm-name">{p.name}</div>

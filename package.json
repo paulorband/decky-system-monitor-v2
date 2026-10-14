@@ -8,6 +8,7 @@
     "build": "rollup -c",
     "watch": "rollup -c -w",
     "typecheck": "tsc --noEmit",
+    "check:i18n": "node scripts/check-locales.mjs",
     "test:py": "uv run --no-project --python 3.11 python -m unittest discover -s tests -v",
     "deploy:ssh": "node scripts/bash.mjs scripts/deploy.sh",
     "deploy:logs": "node scripts/bash.mjs scripts/deploy.sh --logs",

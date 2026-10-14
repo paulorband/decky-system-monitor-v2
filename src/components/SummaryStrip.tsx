@@ -1,5 +1,6 @@
 import { Metrics } from "../api";
 import { batteryColor, fmtPct, loadColor } from "../format";
+import { t } from "../i18n";
 
 function Tile({ label, value, color }: { label: string; value: string; color: string }) {
   return (
@@ -18,7 +19,7 @@ export function SummaryStrip({ m }: { m: Metrics }) {
       <Tile label="CPU" value={fmtPct(m.cpu.usage)} color={loadColor(m.cpu.usage)} />
       <Tile label="GPU" value={fmtPct(m.gpu?.usage)} color={loadColor(m.gpu?.usage)} />
       <Tile label="RAM" value={fmtPct(m.memory.percent)} color={loadColor(m.memory.percent)} />
-      <Tile label="BAT" value={fmtPct(m.battery?.percent)} color={batteryColor(m.battery?.percent)} />
+      <Tile label={t("summary.battery")} value={fmtPct(m.battery?.percent)} color={batteryColor(m.battery?.percent)} />
     </div>
   );
 }

@@ -20,8 +20,9 @@ import {
   tempColor,
 } from "../format";
 import { usePolling } from "../hooks/usePolling";
+import { AUTO_LANGUAGE, availableLanguages, fmtNumber, setLanguagePreference, t, useI18n } from "../i18n";
 import { PROCESSES_ROUTE } from "../routes";
-import { REFRESH_OPTIONS, usePersistentState } from "../settings";
+import { REFRESH_INTERVALS_MS, usePersistentState } from "../settings";
 import { getHistory, recordMetrics } from "../store";
 import { CSS } from "../styles";
 
@@ -49,17 +50,17 @@ function CpuCard({ m }: { m: Metrics }) {
             ))}
           </div>
           <div className="ssm-stats">
-            <Stat label="Load" value={cpu.load_avg ? cpu.load_avg.map((l) => l.toFixed(2)).join(" ") : "—"} />
-            <Stat label="Máx" value={fmtMhz(cpu.freq_max_mhz)} />
+            <Stat label={t("cpu.load")} value={cpu.load_avg ? cpu.load_avg.map((l) => fmtNumber(l, 2)).join(" ") : "—"} />
+            <Stat label={t("cpu.max")} value={fmtMhz(cpu.freq_max_mhz)} />
           </div>
           {cpu.model && <div className="ssm-muted" style={{ marginTop: 4 }}>{cpu.model}</div>}
         </>
       }
     >
       <div className="ssm-stats">
-        <Stat label="Temp" value={fmtTemp(cpu.temp_c)} color={tempColor(cpu.temp_c)} />
-        <Stat label="Clock" value={fmtMhz(cpu.freq_mhz)} />
-        {cpu.cores != null && <Stat label="Núcleos" value={cpu.cores} />}
+        <Stat label={t("cpu.temp")} value={fmtTemp(cpu.temp_c)} color={tempColor(cpu.temp_c)} />
+        <Stat label={t("cpu.clock")} value={fmtMhz(cpu.freq_mhz)} />
+        {cpu.cores != null && <Stat label={t("cpu.cores")} value={cpu.cores} />}
       </div>
       <Bar percent={cpu.usage} />
       <Sparkline values={getHistory("cpu")} color={COLORS.cpu} />
@@ -93,7 +94,7 @@ function GpuCard({ m }: { m: Metrics }) {
             {gttPct != null && (
               <>
                 <div className="ssm-sub">
-                  <span>GTT (memória compartilhada)</span>
+                  <span>{t("gpu.gtt")}</span>
                   <span>{fmtMb(gpu.gtt_used_mb)} / {fmtMb(gpu.gtt_total_mb)}</span>
                 </div>
                 <Bar percent={gttPct} color={COLORS.gpu} />
@@ -104,8 +105,8 @@ function GpuCard({ m }: { m: Metrics }) {
       }
     >
       <div className="ssm-stats">
-        <Stat label="Temp" value={fmtTemp(gpu.temp_c)} color={tempColor(gpu.temp_c)} />
-        <Stat label="Clock" value={fmtMhz(gpu.freq_mhz)} />
+        <Stat label={t("gpu.temp")} value={fmtTemp(gpu.temp_c)} color={tempColor(gpu.temp_c)} />
+        <Stat label={t("gpu.clock")} value={fmtMhz(gpu.freq_mhz)} />
         <Stat label="APU" value={fmtWatts(gpu.power_w)} />
       </div>
       <Bar percent={gpu.usage} />
@@ -118,7 +119,7 @@ function MemoryCard({ m }: { m: Metrics }) {
   const mem = m.memory;
   return (
     <MetricCard
-      title="Memória"
+      title={t("memory.title")}
       color={COLORS.ram}
       headline={<span style={{ color: loadColor(mem.percent) }}>{fmtPct(mem.percent)}</span>}
     >
@@ -146,22 +147,22 @@ function BatteryCard({ m }: { m: Metrics }) {
   const charging = bat.status === "Charging";
   return (
     <MetricCard
-      title="Bateria"
+      title={t("battery.title")}
       color={COLORS.battery}
       headline={<span style={{ color: batteryColor(bat.percent) }}>{fmtPct(bat.percent)}</span>}
       details={
         bat.health_percent != null ? (
           <div className="ssm-stats">
-            <Stat label="Saúde" value={fmtPct(bat.health_percent, 1)} />
+            <Stat label={t("battery.health")} value={fmtPct(bat.health_percent, 1)} />
           </div>
         ) : undefined
       }
     >
       <div className="ssm-stats">
         <Stat label="" value={fmtBatteryStatus(bat.status)} />
-        <Stat label={charging ? "Entrada" : "Consumo"} value={fmtWatts(bat.power_w)} />
+        <Stat label={t(charging ? "battery.input" : "battery.draw")} value={fmtWatts(bat.power_w)} />
         {bat.time_left_min != null && (
-          <Stat label={charging ? "Cheia em" : "Restam"} value={fmtDuration(bat.time_left_min)} />
+          <Stat label={t(charging ? "battery.fullIn" : "battery.left")} value={fmtDuration(bat.time_left_min)} />
         )}
       </div>
       <Bar percent={bat.percent} color={batteryColor(bat.percent)} />
@@ -172,10 +173,10 @@ function BatteryCard({ m }: { m: Metrics }) {
 function FansCard({ m }: { m: Metrics }) {
   if (!m.fans.length) return null;
   return (
-    <MetricCard title="Ventoinhas" color={COLORS.muted} headline={null}>
+    <MetricCard title={t("fans.title")} color={COLORS.muted} headline={null}>
       <div className="ssm-stats">
         {m.fans.map((f, i) => (
-          <Stat key={i} label={fmtFanLabel(f.label, i, m.fans.length)} value={`${f.rpm} RPM`} />
+          <Stat key={i} label={fmtFanLabel(f.label, i, m.fans.length)} value={`${fmtNumber(f.rpm)} RPM`} />
         ))}
       </div>
     </MetricCard>
@@ -184,6 +185,7 @@ function FansCard({ m }: { m: Metrics }) {
 
 export function Dashboard() {
   const visible = useQuickAccessVisible();
+  const { preference } = useI18n();
   const [refreshMs, setRefreshMs] = usePersistentState<number>("refreshMs", 1000);
   const { data: m, error } = usePolling(fetchAndRecord, refreshMs, visible);
 
@@ -198,11 +200,11 @@ export function Dashboard() {
       <PanelSection>
         <PanelSectionRow>
           <ButtonItem layout="below" onClick={openProcesses}>
-            Gerenciador de processos
+            {t("dashboard.processManager")}
           </ButtonItem>
         </PanelSectionRow>
-        {error && <div className="ssm-error">Erro ao ler métricas: {error}</div>}
-        {!m && !error && <div className="ssm-muted">Carregando…</div>}
+        {error && <div className="ssm-error">{t("dashboard.error", { error })}</div>}
+        {!m && !error && <div className="ssm-muted">{t("common.loading")}</div>}
         {m && (
           <>
             <SummaryStrip m={m} />
@@ -214,13 +216,24 @@ export function Dashboard() {
           </>
         )}
       </PanelSection>
-      <PanelSection title="Configurações">
+      <PanelSection title={t("dashboard.settings")}>
         <PanelSectionRow>
           <DropdownItem
-            label="Atualização"
-            rgOptions={REFRESH_OPTIONS}
+            label={t("dashboard.refresh")}
+            rgOptions={REFRESH_INTERVALS_MS.map((ms) => ({ data: ms, label: `${fmtNumber(ms / 1000, ms % 1000 ? 1 : 0)} s` }))}
             selectedOption={refreshMs}
             onChange={(opt) => setRefreshMs(opt.data as number)}
+          />
+        </PanelSectionRow>
+        <PanelSectionRow>
+          <DropdownItem
+            label={t("dashboard.language")}
+            rgOptions={[
+              { data: AUTO_LANGUAGE, label: t("dashboard.languageAuto") },
+              ...availableLanguages().map((l) => ({ data: l.code, label: l.name })),
+            ]}
+            selectedOption={preference}
+            onChange={(opt) => setLanguagePreference(opt.data as string)}
           />
         </PanelSectionRow>
       </PanelSection>

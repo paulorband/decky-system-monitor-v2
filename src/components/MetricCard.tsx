@@ -1,5 +1,6 @@
 import { Focusable } from "@decky/ui";
 import { ReactNode, useState } from "react";
+import { t } from "../i18n";
 
 interface Props {
   title: string;
@@ -18,7 +19,7 @@ export function MetricCard({ title, color, headline, children, details }: Props)
       focusClassName="ssm-focus"
       noFocusRing
       onActivate={details ? () => setExpanded(!expanded) : () => {}}
-      onOKActionDescription={details ? (expanded ? "Recolher" : "Detalhes") : undefined}
+      onOKActionDescription={details ? t(expanded ? "common.collapse" : "common.details") : undefined}
     >
       <div className="ssm-card-head">
         <span className="ssm-card-title" style={{ color }}>

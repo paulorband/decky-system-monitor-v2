@@ -30,6 +30,24 @@ Funciona em SteamOS (Steam Deck), Bazzite e CachyOS Handheld (ROG Ally / Ally X,
 
 CPU % de um processo é relativo à máquina inteira (100% = todos os núcleos ocupados), como no Gerenciador de Tarefas do Windows.
 
+## Idiomas
+
+Português do Brasil, Inglês e Espanhol. Por padrão o plugin segue o idioma da Steam (inglês se não for suportado);
+dá para escolher outro em **Configurações → Idioma** no painel.
+
+**Adicionar um idioma:** copie `src/locales/en.json` para `src/locales/<código>.json` (ex.: `fr.json`), traduza os
+valores e ajuste o `_meta`:
+
+```jsonc
+"_meta": { "name": "Français", "steamLanguages": ["french"] }   // nome nativo + idiomas da Steam correspondentes
+```
+
+O build inclui o arquivo automaticamente. Valide com:
+
+```bash
+pnpm check:i18n
+```
+
 ## Desenvolvimento
 
 Requisitos: Node 20+, pnpm, [uv](https://docs.astral.sh/uv/) (para os testes Python) e, no Windows, Git for Windows (Git Bash).

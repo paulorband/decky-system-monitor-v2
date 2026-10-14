@@ -1,3 +1,5 @@
+import { fmtNumber, t } from "./i18n";
+
 export const DASH = "—";
 
 export const COLORS = {
@@ -34,7 +36,7 @@ export function batteryColor(percent: number | null | undefined): string {
 }
 
 export function fmtPct(v: number | null | undefined, digits = 0): string {
-  return v == null ? DASH : `${v.toFixed(digits)}%`;
+  return v == null ? DASH : `${fmtNumber(v, digits)}%`;
 }
 
 export function fmtTemp(v: number | null | undefined): string {
@@ -43,16 +45,16 @@ export function fmtTemp(v: number | null | undefined): string {
 
 export function fmtMhz(v: number | null | undefined): string {
   if (v == null) return DASH;
-  return v >= 1000 ? `${(v / 1000).toFixed(2)} GHz` : `${v} MHz`;
+  return v >= 1000 ? `${fmtNumber(v / 1000, 2)} GHz` : `${fmtNumber(v)} MHz`;
 }
 
 export function fmtWatts(v: number | null | undefined): string {
-  return v == null ? DASH : `${v.toFixed(1)} W`;
+  return v == null ? DASH : `${fmtNumber(v, 1)} W`;
 }
 
 export function fmtMb(v: number | null | undefined): string {
   if (v == null) return DASH;
-  return v >= 1024 ? `${(v / 1024).toFixed(1)} GB` : `${Math.round(v)} MB`;
+  return v >= 1024 ? `${fmtNumber(v / 1024, 1)} GB` : `${fmtNumber(v)} MB`;
 }
 
 export function fmtDuration(minutes: number | null | undefined): string {
@@ -62,28 +64,26 @@ export function fmtDuration(minutes: number | null | undefined): string {
   return h > 0 ? `${h}h ${m.toString().padStart(2, "0")}m` : `${m}m`;
 }
 
-const BATTERY_STATUS: Record<string, string> = {
-  Charging: "Carregando",
-  Discharging: "Descarregando",
-  Full: "Carregada",
-  "Not charging": "Na tomada",
-  Unknown: "Desconhecido",
+const BATTERY_STATUS_KEYS: Record<string, string> = {
+  Charging: "battery.status.Charging",
+  Discharging: "battery.status.Discharging",
+  Full: "battery.status.Full",
+  "Not charging": "battery.status.NotCharging",
+  Unknown: "battery.status.Unknown",
 };
 
 export function fmtBatteryStatus(status: string | null | undefined): string {
   if (!status) return DASH;
-  return BATTERY_STATUS[status] ?? status;
+  const key = BATTERY_STATUS_KEYS[status];
+  return key ? t(key) : status;
 }
 
-const FAN_LABELS: Record<string, string> = {
-  cpu_fan: "CPU",
-  gpu_fan: "GPU",
-  mid_fan: "Central",
-};
-
 /** Friendly fan name: known driver labels are translated; unlabeled fans become
- *  "Ventoinha" (numbered when there is more than one). */
+ *  "Fan" (numbered when there is more than one). */
 export function fmtFanLabel(label: string | null, index: number, total: number): string {
-  if (label) return FAN_LABELS[label] ?? label;
-  return total > 1 ? `Ventoinha ${index + 1}` : "Ventoinha";
+  if (label === "cpu_fan") return "CPU";
+  if (label === "gpu_fan") return "GPU";
+  if (label === "mid_fan") return t("fans.mid");
+  if (label) return label;
+  return total > 1 ? t("fans.fanNumbered", { n: index + 1 }) : t("fans.fan");
 }

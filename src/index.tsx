@@ -1,11 +1,13 @@
 import { staticClasses } from "@decky/ui";
 import { definePlugin, routerHook } from "@decky/api";
 import { FaChartLine } from "react-icons/fa";
+import { initI18n } from "./i18n";
 import { PROCESSES_ROUTE } from "./routes";
 import { Dashboard } from "./views/Dashboard";
 import { ProcessManager } from "./views/ProcessManager";
 
 export default definePlugin(() => {
+  initI18n();
   routerHook.addRoute(PROCESSES_ROUTE, ProcessManager, { exact: true });
 
   return {

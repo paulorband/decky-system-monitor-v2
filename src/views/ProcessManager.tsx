@@ -4,6 +4,7 @@ import { GroupMode, SortKey, getMetrics, getProcesses } from "../api";
 import { MemberRow, ProcessRow, ProcessTableHeader } from "../components/ProcessTable";
 import { COLORS, fmtMb, fmtPct, loadColor } from "../format";
 import { usePolling } from "../hooks/usePolling";
+import { useI18n } from "../i18n";
 import { usePersistentState } from "../settings";
 import { recordMetrics } from "../store";
 import { CSS, GROUP_CSS, PROCESS_CSS } from "../styles";
@@ -11,11 +12,12 @@ import { CSS, GROUP_CSS, PROCESS_CSS } from "../styles";
 const PAGE_SIZE = 40;
 const REFRESH_MS = 2000;
 const SORT_CYCLE: SortKey[] = ["cpu", "mem", "name"];
-const SORT_LABELS: Record<SortKey, string> = { cpu: "CPU", mem: "RAM", name: "Nome" };
+const SORT_LABEL_KEYS: Record<SortKey, string> = { cpu: "CPU", mem: "RAM", name: "proc.sortName" };
 const GROUP_CYCLE: GroupMode[] = ["app", "name", "none"];
-const GROUP_LABELS: Record<GroupMode, string> = { app: "Agrupar: jogos", name: "Agrupar: nome", none: "Sem grupos" };
+const GROUP_LABEL_KEYS: Record<GroupMode, string> = { app: "proc.groupApp", name: "proc.groupName", none: "proc.groupNone" };
 
 export function ProcessManager() {
+  const { t } = useI18n();
   const [sortKey, setSortKey] = usePersistentState<SortKey>("procSort", "cpu");
   const [descending, setDescending] = usePersistentState<boolean>("procDesc", true);
   const [includeKernel, setIncludeKernel] = usePersistentState<boolean>("procKernel", false);
@@ -76,20 +78,20 @@ export function ProcessManager() {
         className="ssm-page-inner"
         flow-children="column"
         onSecondaryButton={cycleSort}
-        onSecondaryActionDescription={`Ordenar: ${SORT_LABELS[nextSort]}`}
+        onSecondaryActionDescription={t("proc.sortNext", { column: t(SORT_LABEL_KEYS[nextSort]) })}
         onOptionsButton={togglePause}
-        onOptionsActionDescription={paused ? "Retomar" : "Pausar"}
+        onOptionsActionDescription={t(paused ? "proc.resume" : "proc.pause")}
       >
         <div className="ssm-proc-top">
-          <div className="ssm-proc-title">Processos</div>
+          <div className="ssm-proc-title">{t("proc.title")}</div>
           <div className="ssm-proc-summary">
             <span>
-              <span className="ssm-muted">Processos </span>
+              <span className="ssm-muted">{t("proc.processes")} </span>
               <b>{procs?.process_count ?? "—"}</b>
             </span>
             {groupMode !== "none" && procs && (
               <span>
-                <span className="ssm-muted">Grupos </span>
+                <span className="ssm-muted">{t("proc.groups")} </span>
                 <b>{procs.total}</b>
               </span>
             )}
@@ -103,30 +105,31 @@ export function ProcessManager() {
                 {metrics ? `${fmtMb(metrics.memory.used_mb)} / ${fmtMb(metrics.memory.total_mb)}` : "—"}
               </b>
             </span>
-            {paused && <span className="ssm-chip" style={{ background: COLORS.warn }}>PAUSADO</span>}
+            {paused && <span className="ssm-chip" style={{ background: COLORS.warn }}>{t("proc.paused")}</span>}
           </div>
         </div>
 
         <Focusable flow-children="row" className="ssm-proc-toolbar">
           <DialogButton className="ssm-tool-btn" onClick={togglePause}>
-            {paused ? "▶ Retomar" : "❚❚ Pausar"}
+            {paused ? `▶ ${t("proc.resume")}` : `❚❚ ${t("proc.pause")}`}
           </DialogButton>
           <DialogButton className="ssm-tool-btn" onClick={toggleGrouped}>
-            {GROUP_LABELS[groupMode]}
+            {t(GROUP_LABEL_KEYS[groupMode])}
           </DialogButton>
           <DialogButton className="ssm-tool-btn" onClick={toggleKernel}>
-            {includeKernel ? "Ocultar kernel" : "Mostrar kernel"}
+            {t(includeKernel ? "proc.kernelHide" : "proc.kernelShow")}
           </DialogButton>
           <div className="ssm-hint">
-            <b>X</b> ordenar · <b>Y</b> pausar · <b>A</b> detalhes · <b>B</b> voltar
+            <b>X</b> {t("proc.hintSort")} · <b>Y</b> {t("proc.hintPause")} · <b>A</b> {t("proc.hintDetails")} · <b>B</b>{" "}
+            {t("proc.hintBack")}
           </div>
         </Focusable>
 
         <ProcessTableHeader sortKey={sortKey} descending={descending} onSort={onSort} />
 
         <Focusable flow-children="column" className="ssm-tbody">
-          {error && <div className="ssm-error">Erro ao ler processos: {error}</div>}
-          {!procs && !error && <div className="ssm-muted" style={{ padding: 12 }}>Carregando…</div>}
+          {error && <div className="ssm-error">{t("proc.error", { error })}</div>}
+          {!procs && !error && <div className="ssm-muted" style={{ padding: 12 }}>{t("common.loading")}</div>}
           {procs?.processes.map((item, i) => {
             const isGroup = item.count > 1;
             const open = isGroup ? openGroup === item.key : openDetail === item.key;
@@ -149,7 +152,7 @@ export function ProcessManager() {
           })}
           {remaining > 0 && (
             <DialogButton className="ssm-more-btn" onClick={() => setLimit(limit + PAGE_SIZE)}>
-              Mostrar mais ({remaining} restantes)
+              {t("proc.more", { count: remaining })}
             </DialogButton>
           )}
         </Focusable>
