@@ -1,6 +1,6 @@
 # Spec 006 — Agrupamento de processos por jogo (AppID)
 
-- **Status:** Concluída — AC-7/AC-8 dependem de teste no Ally X
+- **Status:** Concluída — validada no Ally X; pendente: AC-8 (ciclo dos três modos e persistência)
 - **Depende de:** 005
 
 ## Contexto
@@ -48,7 +48,7 @@ Agrupando só pelo nome (spec 005), o consumo do jogo fica espalhado pela lista.
 - [x] **AC-4** Processos sem AppID continuam agrupados por nome no modo `"app"`.
 - [x] **AC-5** `group=True` ≡ `"name"`, `group=False` ≡ `"none"`; itens trazem `kind` e `app_id`.
 - [x] **AC-6** `pnpm test:py`, `pnpm typecheck` e `pnpm build` passam.
-- [ ] **AC-7** No Ally X, com um jogo aberto, ele aparece como uma linha com selo JOGO e expande para seus processos. _(validar no aparelho)_
+- [x] **AC-7** No Ally X, com um jogo aberto, ele aparece como uma linha com selo JOGO e expande para seus processos. _(validado no Ally X com God of War Ragnarök: 17 processos, 2026-10-14)_
 - [ ] **AC-8** O botão alterna os três modos e a escolha persiste. _(validar no aparelho)_
 
 ## Design
