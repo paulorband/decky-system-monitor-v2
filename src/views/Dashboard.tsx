@@ -175,7 +175,7 @@ function FansCard({ m }: { m: Metrics }) {
     <MetricCard title="Ventoinhas" color={COLORS.muted} headline={null}>
       <div className="ssm-stats">
         {m.fans.map((f, i) => (
-          <Stat key={i} label={fmtFanLabel(f.label)} value={`${f.rpm} RPM`} />
+          <Stat key={i} label={fmtFanLabel(f.label, i, m.fans.length)} value={`${f.rpm} RPM`} />
         ))}
       </div>
     </MetricCard>

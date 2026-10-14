@@ -23,7 +23,9 @@ Z1/Z1 Extreme, Legion Go, etc.), sem depender de bibliotecas nativas.
 - **FR-4 Memória:** total, usado (total − disponível), disponível, % e swap (inclui zram) a partir de `/proc/meminfo`.
 - **FR-5 Bateria:** primeira `power_supply` com `type=Battery` e `scope≠Device` (ignora baterias de controles).
   Percentual, status, potência (W; `power_now` ou `current_now×voltage_now`), tempo restante estimado (min) e saúde (%).
-- **FR-6 Ventoinhas:** todas as entradas `fan*_input` de hwmon com rótulo (`fan*_label` ou nome do hwmon).
+- **FR-6 Ventoinhas:** todas as entradas `fan*_input` de hwmon, com `label` = `fan*_label` ou `null` quando o driver
+  não informa (ex.: `steamdeck_hwmon`). A UI traduz rótulos conhecidos (`cpu_fan` → CPU) e mostra "Ventoinha"
+  (numerada se houver mais de uma) para os sem rótulo.
   O hwmon genérico `acpi_fan` só é usado quando nenhum driver de plataforma (`asus`, `steamdeck_hwmon`…) informa
   ventoinhas — senão ele duplica uma ventoinha física (visto no Ally X: 3 ventoinhas para 2 físicas).
 - **FR-7** Uptime (s).
@@ -42,7 +44,7 @@ Z1/Z1 Extreme, Legion Go, etc.), sem depender de bibliotecas nativas.
               "swap_total_mb": 11900, "swap_used_mb": 0, "swap_percent": 0.0 },
   "battery": { "percent": 81, "status": "Discharging", "power_w": 19.8, "time_left_min": 192,
                "health_percent": 97.4 },                                                          // ou null
-  "fans": [ { "label": "cpu_fan", "rpm": 3400 } ]
+  "fans": [ { "label": "cpu_fan", "rpm": 3400 }, { "label": null, "rpm": 3200 } ]
 }
 ```
 
@@ -60,6 +62,7 @@ Z1/Z1 Extreme, Legion Go, etc.), sem depender de bibliotecas nativas.
 - [x] **AC-6** Sistema sem GPU/bateria/ventoinhas retorna `gpu: null`, `battery: null`, `fans: []`.
 - [x] **AC-8** Com `asus` (cpu_fan, gpu_fan) e `acpi_fan` presentes, só as 2 ventoinhas da plataforma aparecem;
   só com `acpi_fan`, ele aparece.
+- [x] **AC-9** Ventoinha sem `fan*_label` retorna `label: null` (exibida como "Ventoinha").
 - [x] **AC-7** Testes `pnpm test:py` passam.
 
 ## Design

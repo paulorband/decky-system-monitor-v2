@@ -79,9 +79,11 @@ const FAN_LABELS: Record<string, string> = {
   cpu_fan: "CPU",
   gpu_fan: "GPU",
   mid_fan: "Central",
-  acpi_fan: "Ventoinha",
 };
 
-export function fmtFanLabel(label: string): string {
-  return FAN_LABELS[label] ?? label;
+/** Friendly fan name: known driver labels are translated; unlabeled fans become
+ *  "Ventoinha" (numbered when there is more than one). */
+export function fmtFanLabel(label: string | null, index: number, total: number): string {
+  if (label) return FAN_LABELS[label] ?? label;
+  return total > 1 ? `Ventoinha ${index + 1}` : "Ventoinha";
 }

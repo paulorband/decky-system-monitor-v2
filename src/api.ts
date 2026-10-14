@@ -43,7 +43,8 @@ export interface BatteryMetrics {
 }
 
 export interface Fan {
-  label: string;
+  /** Driver label (e.g. "cpu_fan"); null when the driver provides none. */
+  label: string | null;
   rpm: number;
 }
 

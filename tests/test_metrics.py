@@ -71,7 +71,17 @@ class MetricsTest(unittest.TestCase):
             fs.write("sys/class/hwmon/hwmon0/name", "acpi_fan")
             fs.write("sys/class/hwmon/hwmon0/fan1_input", 2000)
             fans = MetricsCollector(root=fs.root).snapshot()["fans"]
-            self.assertEqual(fans, [{"label": "acpi_fan", "rpm": 2000}])
+            self.assertEqual(fans, [{"label": None, "rpm": 2000}])
+        finally:
+            fs.cleanup()
+
+    def test_unlabeled_platform_fan(self):  # AC-9: Steam Deck style driver without fan1_label
+        fs = FakeFS()
+        try:
+            fs.write("sys/class/hwmon/hwmon2/name", "steamdeck_hwmon")
+            fs.write("sys/class/hwmon/hwmon2/fan1_input", 3200)
+            fans = MetricsCollector(root=fs.root).snapshot()["fans"]
+            self.assertEqual(fans, [{"label": None, "rpm": 3200}])
         finally:
             fs.cleanup()
 

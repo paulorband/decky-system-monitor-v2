@@ -275,7 +275,7 @@ class MetricsCollector:
                     if rpm is None:
                         continue
                     label = read_str(os.path.join(path, entry.replace("_input", "_label")))
-                    target.append({"label": label or name, "rpm": rpm})
+                    target.append({"label": label or None, "rpm": rpm})
         # The generic ACPI fan device mirrors fans a platform driver (asus, steamdeck_hwmon...)
         # already reports, so it only counts when nothing better exists.
         return fans or generic
