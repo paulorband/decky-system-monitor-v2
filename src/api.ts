@@ -58,3 +58,28 @@ export interface Metrics {
 }
 
 export const getMetrics = callable<[], Metrics>("get_metrics");
+
+// Mirrors the get_processes() contract (specs/003-gerenciador-processos).
+export type SortKey = "name" | "cpu" | "mem";
+
+export interface ProcessInfo {
+  pid: number;
+  name: string;
+  cmd: string;
+  cpu: number;
+  mem_mb: number;
+  mem_percent: number | null;
+  threads: number;
+  state: string;
+  ppid: number;
+}
+
+export interface ProcessList {
+  total: number;
+  shown: number;
+  cpu_count: number;
+  mem_total_mb: number | null;
+  processes: ProcessInfo[];
+}
+
+export const getProcesses = callable<[SortKey, boolean, number, boolean], ProcessList>("get_processes");

@@ -9,11 +9,13 @@ if _PY_MODULES not in sys.path:
     sys.path.append(_PY_MODULES)
 
 from sysmon.metrics import MetricsCollector  # noqa: E402
+from sysmon.processes import ProcessSampler  # noqa: E402
 
 
 class Plugin:
     async def _main(self):
         self.metrics = MetricsCollector()
+        self.processes = ProcessSampler()
         decky.logger.info("System Monitor loaded")
 
     async def _unload(self):
@@ -24,4 +26,17 @@ class Plugin:
             return self.metrics.snapshot()
         except Exception:
             decky.logger.exception("get_metrics failed")
+            raise
+
+    async def get_processes(
+        self,
+        sort_key: str = "cpu",
+        descending: bool = True,
+        limit: int = 40,
+        include_kernel: bool = False,
+    ) -> dict:
+        try:
+            return self.processes.sample(sort_key, descending, limit, include_kernel)
+        except Exception:
+            decky.logger.exception("get_processes failed")
             raise
