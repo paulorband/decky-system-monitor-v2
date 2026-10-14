@@ -1,6 +1,6 @@
 # Spec 003 — Gerenciador de processos
 
-- **Status:** Concluída — ACs marcados com _(validar no aparelho)_ dependem de teste no Ally X
+- **Status:** Concluída — validada no Ally X
 - **Depende de:** 001, 002
 
 ## Contexto
@@ -57,8 +57,8 @@ Precisamos de uma tela cheia, estilo gerenciador de tarefas, navegável 100% pel
 - [x] **AC-3** Com `include_kernel=False`, filhos do PID 2 não aparecem e `total` não os conta.
 - [x] **AC-4** Ordenação por nome (case-insensitive), CPU e RAM, nas duas direções, respeitando `limit`.
 - [x] **AC-5** Processo que some entre amostras não gera erro e sai do cache.
-- [ ] **AC-6** Na tela, D-pad navega cabeçalho → linhas → "Mostrar mais"; A no cabeçalho ordena/inverte. _(validar no aparelho)_
-- [ ] **AC-7** X alterna coluna, Y pausa, B volta. _(validar no aparelho)_
+- [x] **AC-6** Na tela, D-pad navega cabeçalho → linhas → "Mostrar mais"; A no cabeçalho ordena/inverte. _(validado no Ally X, 2026-10-14)_
+- [x] **AC-7** X alterna coluna, Y pausa, B volta. _(validado no Ally X, 2026-10-14)_
 - [x] **AC-8** `pnpm test:py`, `pnpm typecheck` e `pnpm build` passam.
 - [x] **AC-9** Plugins do Decky aparecem como `Decky: <nome do plugin>` (antes: todos `main.py)`, visto no Ally X).
 - [x] **AC-10** `argv[0]=/proc/self/exe` usa `comm` (antes: grupo `exe`).

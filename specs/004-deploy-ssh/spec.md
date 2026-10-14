@@ -1,6 +1,6 @@
 # Spec 004 — Deploy via SSH
 
-- **Status:** Concluída — AC-4/AC-5 dependem de teste no Ally X
+- **Status:** Concluída — deploy validado no Ally X; pendente: AC-5 (`--logs`)
 - **Depende de:** 000
 
 ## Contexto
@@ -34,7 +34,7 @@ Precisamos de um comando único que compile, envie e recarregue o plugin no apar
 - [x] **AC-1** `pnpm run package` gera `out/steam-system-monitor.zip` contendo a pasta do plugin.
 - [x] **AC-2** Sem `DECK_HOST`, o deploy aborta com mensagem orientando a criar `.env.deploy`.
 - [x] **AC-3** `--help` lista as opções.
-- [ ] **AC-4** `pnpm run deploy:ssh` instala no Ally X e o plugin aparece no QAM após o restart. _(validar no aparelho)_
+- [x] **AC-4** `pnpm run deploy:ssh` instala no Ally X e o plugin aparece no QAM após o restart. _(validado no Ally X, 2026-10-14)_
 - [ ] **AC-5** `--logs` mostra o log do Decky. _(validar no aparelho)_
 
 ## Design

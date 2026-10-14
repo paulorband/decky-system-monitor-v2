@@ -1,6 +1,6 @@
 # Spec 002 — Dashboard de resumo (Quick Access Menu)
 
-- **Status:** Concluída — ACs marcados com _(validar no aparelho)_ dependem de teste no Ally X
+- **Status:** Concluída — validada no Ally X; pendentes: AC-4 (hardware sem GPU/bateria) e AC-5 (persistência após reiniciar o Steam)
 - **Depende de:** 001
 
 ## Contexto
@@ -34,9 +34,9 @@ Ela deve mostrar o estado do sistema de relance e permitir aprofundar sem sair d
 - **NFR-4** Cores: verde < 60%, amarelo 60–85%, vermelho > 85%; temperaturas < 70 / 70–85 / > 85 °C.
 
 ## Critérios de aceite
-- [ ] **AC-1** Ao abrir o QAM, os valores aparecem em até 1 intervalo e atualizam periodicamente. _(validar no aparelho)_
+- [x] **AC-1** Ao abrir o QAM, os valores aparecem em até 1 intervalo e atualizam periodicamente. _(validado no Ally X, 2026-10-14)_
 - [x] **AC-2** Fechando o QAM, nenhuma chamada `get_metrics` é feita (o hook depende de `visible`).
-- [ ] **AC-3** Com o D-pad é possível focar cada cartão em sequência; **A** alterna detalhes. _(validar no aparelho)_
+- [x] **AC-3** Com o D-pad é possível focar cada cartão em sequência; **A** alterna detalhes. _(validado no Ally X, 2026-10-14)_
 - [ ] **AC-4** Em hardware sem bateria/GPU os cartões correspondentes não aparecem e nada quebra. _(validar no aparelho)_
 - [ ] **AC-5** O intervalo escolhido persiste após reiniciar o Steam. _(validar no aparelho)_
 - [x] **AC-6** `pnpm typecheck` e `pnpm build` passam.

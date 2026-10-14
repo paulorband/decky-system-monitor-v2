@@ -1,6 +1,6 @@
 # Spec 005 — Agrupamento de processos
 
-- **Status:** Concluída — AC-5/AC-6 dependem de teste no Ally X
+- **Status:** Concluída — validada no Ally X; pendente: AC-6 (persistência da preferência)
 - **Depende de:** 003
 
 ## Contexto
@@ -41,7 +41,7 @@ o que esconde quem realmente consome recursos e exige muita rolagem com o D-pad.
 - [x] **AC-2** Processo único agrupado tem `count=1` e `members` vazio.
 - [x] **AC-3** Ordenação por CPU/RAM/nome considera os valores do grupo; `limit` corta grupos.
 - [x] **AC-4** `group=False` mantém a lista plana, com `key` igual a `pid:<pid>`.
-- [ ] **AC-5** Na tela, o grupo expande/recolhe com A e as sub-linhas são navegáveis pelo D-pad. _(validar no aparelho)_
+- [x] **AC-5** Na tela, o grupo expande/recolhe com A e as sub-linhas são navegáveis pelo D-pad. _(validado no Ally X, 2026-10-14)_
 - [ ] **AC-6** A preferência "Agrupar" persiste entre aberturas da tela. _(validar no aparelho)_
 - [x] **AC-7** `pnpm test:py`, `pnpm typecheck` e `pnpm build` passam.
 
