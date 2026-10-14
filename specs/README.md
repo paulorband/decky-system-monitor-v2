@@ -21,6 +21,6 @@ Toda spec deve respeitar a [constituição](constitution.md).
 |------|--------|--------|
 | [000](000-fundacao/spec.md) | Fundação do projeto e processo | Concluída |
 | [001](001-coletor-metricas/spec.md) | Coletor de métricas (backend) | Concluída |
-| [002](002-dashboard/spec.md) | Dashboard de resumo (QAM) | Planejada |
+| [002](002-dashboard/spec.md) | Dashboard de resumo (QAM) | Concluída |
 | [003](003-gerenciador-processos/spec.md) | Gerenciador de processos | Planejada |
 | [004](004-deploy-ssh/spec.md) | Deploy via SSH | Planejada |
