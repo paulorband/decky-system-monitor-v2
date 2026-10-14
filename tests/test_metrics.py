@@ -59,8 +59,21 @@ class MetricsTest(unittest.TestCase):
         self.assertEqual(bat["time_left_min"], 192)  # 4.0 Ah / 1.25 A
         self.assertEqual(bat["health_percent"], 96.2)
 
-    def test_fans(self):
-        self.assertEqual(self.collector.snapshot()["fans"], [{"label": "cpu_fan", "rpm": 3400}])
+    def test_fans_skip_generic_acpi_fan(self):  # AC-8
+        self.assertEqual(self.collector.snapshot()["fans"], [
+            {"label": "cpu_fan", "rpm": 3400},
+            {"label": "gpu_fan", "rpm": 3100},
+        ])
+
+    def test_fans_fall_back_to_acpi_fan(self):  # AC-8
+        fs = FakeFS()
+        try:
+            fs.write("sys/class/hwmon/hwmon0/name", "acpi_fan")
+            fs.write("sys/class/hwmon/hwmon0/fan1_input", 2000)
+            fans = MetricsCollector(root=fs.root).snapshot()["fans"]
+            self.assertEqual(fans, [{"label": "acpi_fan", "rpm": 2000}])
+        finally:
+            fs.cleanup()
 
     def test_uptime(self):
         self.assertEqual(self.collector.snapshot()["uptime_s"], 3600.25)

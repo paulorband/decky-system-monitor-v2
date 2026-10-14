@@ -10,6 +10,7 @@ import {
   batteryColor,
   fmtBatteryStatus,
   fmtDuration,
+  fmtFanLabel,
   fmtMb,
   fmtMhz,
   fmtPct,
@@ -174,7 +175,7 @@ function FansCard({ m }: { m: Metrics }) {
     <MetricCard title="Ventoinhas" color={COLORS.muted} headline={null}>
       <div className="ssm-stats">
         {m.fans.map((f, i) => (
-          <Stat key={i} label={f.label} value={`${f.rpm} RPM`} />
+          <Stat key={i} label={fmtFanLabel(f.label)} value={`${f.rpm} RPM`} />
         ))}
       </div>
     </MetricCard>

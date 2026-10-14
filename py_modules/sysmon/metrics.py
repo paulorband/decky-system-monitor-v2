@@ -9,6 +9,7 @@ from .fsutil import list_dir, pct, read_float, read_int, read_str
 CPU_HWMON_NAMES = ("k10temp", "zenpower", "coretemp", "cpu_thermal", "acpitz")
 CPU_TEMP_LABELS = ("tctl", "tdie", "package id 0", "cpu")
 VENDOR_NAMES = {"0x1002": "AMD", "0x8086": "Intel", "0x10de": "NVIDIA"}
+GENERIC_FAN_HWMON = ("acpi_fan",)
 
 # (busy, total) jiffies per cpu line; index 0 is the aggregate "cpu" line
 CpuTimes = List[Tuple[int, int]]
@@ -263,7 +264,9 @@ class MetricsCollector:
 
     def _fans(self) -> List[dict]:
         fans = []
+        generic = []
         for name, paths in sorted(self._hwmon.items()):
+            target = generic if name in GENERIC_FAN_HWMON else fans
             for path in paths:
                 for entry in list_dir(path):
                     if not (entry.startswith("fan") and entry.endswith("_input")):
@@ -272,8 +275,10 @@ class MetricsCollector:
                     if rpm is None:
                         continue
                     label = read_str(os.path.join(path, entry.replace("_input", "_label")))
-                    fans.append({"label": label or name, "rpm": rpm})
-        return fans
+                    target.append({"label": label or name, "rpm": rpm})
+        # The generic ACPI fan device mirrors fans a platform driver (asus, steamdeck_hwmon...)
+        # already reports, so it only counts when nothing better exists.
+        return fans or generic
 
     # ---------------------------------------------------------------- public
 

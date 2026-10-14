@@ -74,3 +74,14 @@ export function fmtBatteryStatus(status: string | null | undefined): string {
   if (!status) return DASH;
   return BATTERY_STATUS[status] ?? status;
 }
+
+const FAN_LABELS: Record<string, string> = {
+  cpu_fan: "CPU",
+  gpu_fan: "GPU",
+  mid_fan: "Central",
+  acpi_fan: "Ventoinha",
+};
+
+export function fmtFanLabel(label: string): string {
+  return FAN_LABELS[label] ?? label;
+}

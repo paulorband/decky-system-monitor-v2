@@ -24,6 +24,8 @@ Z1/Z1 Extreme, Legion Go, etc.), sem depender de bibliotecas nativas.
 - **FR-5 Bateria:** primeira `power_supply` com `type=Battery` e `scope≠Device` (ignora baterias de controles).
   Percentual, status, potência (W; `power_now` ou `current_now×voltage_now`), tempo restante estimado (min) e saúde (%).
 - **FR-6 Ventoinhas:** todas as entradas `fan*_input` de hwmon com rótulo (`fan*_label` ou nome do hwmon).
+  O hwmon genérico `acpi_fan` só é usado quando nenhum driver de plataforma (`asus`, `steamdeck_hwmon`…) informa
+  ventoinhas — senão ele duplica uma ventoinha física (visto no Ally X: 3 ventoinhas para 2 físicas).
 - **FR-7** Uptime (s).
 - **FR-8** Qualquer métrica indisponível retorna `null` (ou lista vazia) sem lançar exceção.
 
@@ -56,6 +58,8 @@ Z1/Z1 Extreme, Legion Go, etc.), sem depender de bibliotecas nativas.
 - [x] **AC-4** Dado GPU AMD, todos os campos de `gpu` são preenchidos em unidades MB/MHz/W/°C.
 - [x] **AC-5** Bateria de controle (`scope=Device`) é ignorada; `power_w` cai para `current×voltage` quando não há `power_now`.
 - [x] **AC-6** Sistema sem GPU/bateria/ventoinhas retorna `gpu: null`, `battery: null`, `fans: []`.
+- [x] **AC-8** Com `asus` (cpu_fan, gpu_fan) e `acpi_fan` presentes, só as 2 ventoinhas da plataforma aparecem;
+  só com `acpi_fan`, ele aparece.
 - [x] **AC-7** Testes `pnpm test:py` passam.
 
 ## Design

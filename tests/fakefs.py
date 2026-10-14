@@ -57,6 +57,11 @@ def build_ally_x(fs: FakeFS) -> None:
     fs.write("sys/class/hwmon/hwmon6/name", "asus")
     fs.write("sys/class/hwmon/hwmon6/fan1_input", 3400)
     fs.write("sys/class/hwmon/hwmon6/fan1_label", "cpu_fan")
+    fs.write("sys/class/hwmon/hwmon6/fan2_input", 3100)
+    fs.write("sys/class/hwmon/hwmon6/fan2_label", "gpu_fan")
+    # Generic ACPI fan device mirroring the same hardware (must be hidden)
+    fs.write("sys/class/hwmon/hwmon1/name", "acpi_fan")
+    fs.write("sys/class/hwmon/hwmon1/fan1_input", 3400)
 
     # amdgpu
     dev = "sys/class/drm/card1/device"
