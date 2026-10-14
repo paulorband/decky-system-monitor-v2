@@ -65,3 +65,15 @@ export const PROCESS_CSS = `
 .ssm-cmd { font-family: monospace; color: #b8bcbf; word-break: break-all; margin-bottom: 4px; }
 .ssm-more-btn { margin-top: 8px; }
 `;
+
+// Process grouping (spec 005)
+export const GROUP_CSS = `
+.ssm-badge { display: inline-block; margin-left: 8px; padding: 0 7px; border-radius: 9px; font-size: 12px;
+  font-weight: 700; background: rgba(79,176,255,0.22); color: #9fd3ff; vertical-align: 1px; }
+.ssm-caret { display: inline-block; width: 16px; color: #8b929a; }
+.ssm-row-open { background: rgba(79,176,255,0.10); }
+.ssm-member { margin-left: 24px; border-left: 2px solid rgba(79,176,255,0.35); border-radius: 0 4px 4px 0; }
+.ssm-member .ssm-td { font-size: 13px; padding-top: 5px; padding-bottom: 5px; }
+.ssm-member .ssm-name { font-weight: 400; color: #b8bcbf; }
+.ssm-member-last { margin-bottom: 6px; }
+`;

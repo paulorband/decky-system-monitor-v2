@@ -34,9 +34,10 @@ class Plugin:
         descending: bool = True,
         limit: int = 40,
         include_kernel: bool = False,
+        group: bool = False,
     ) -> dict:
         try:
-            return self.processes.sample(sort_key, descending, limit, include_kernel)
+            return self.processes.sample(sort_key, descending, limit, include_kernel, group)
         except Exception:
             decky.logger.exception("get_processes failed")
             raise

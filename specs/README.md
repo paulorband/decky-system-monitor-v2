@@ -24,3 +24,4 @@ Toda spec deve respeitar a [constituição](constitution.md).
 | [002](002-dashboard/spec.md) | Dashboard de resumo (QAM) | Concluída |
 | [003](003-gerenciador-processos/spec.md) | Gerenciador de processos | Concluída |
 | [004](004-deploy-ssh/spec.md) | Deploy via SSH | Concluída |
+| [005](005-agrupamento-processos/spec.md) | Agrupamento de processos | Concluída |

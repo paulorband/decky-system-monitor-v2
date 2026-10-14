@@ -109,5 +109,59 @@ class ProcessSamplerTest(unittest.TestCase):
         self.assertEqual(procs[700]["name"], "weird) (name")
 
 
+class GroupingTest(unittest.TestCase):
+    def setUp(self):
+        self.fs = FakeFS()
+        self.fs.write("proc/meminfo", "MemTotal:       16777216 kB\n")
+        self.clock = Clock()
+        self.sampler = ProcessSampler(root=self.fs.root, clock=self.clock)
+        self.sampler.clk_tck = 100
+        self.sampler.page_size = 4096
+        self.sampler.cpu_count = 4
+        procs = [(1301, 10, 25600), (1300, 40, 51200), (1305, 0, 12800), (500, 80, 262144), (600, 0, 256)]
+        for pid, _, rss in procs:
+            self.write(pid, rss, 0)
+        self.sampler.sample(group=True)
+        self.clock.t += 1  # 400 ticks available per second
+        for pid, ticks, rss in procs:
+            self.write(pid, rss, ticks)
+
+    def tearDown(self):
+        self.fs.cleanup()
+
+    def write(self, pid, rss, ticks):
+        names = {500: "game.exe", 600: "bash"}
+        name = names.get(pid, "steamwebhelper")
+        self.fs.write(f"proc/{pid}/stat", stat_line(pid, name, 1, ticks, rss))
+        path = self.fs.write(f"proc/{pid}/cmdline", "")
+        with open(path, "wb") as f:
+            f.write(f"/usr/bin/{name}\0".encode())
+
+    def test_groups_sum_usage(self):  # AC-1
+        items = {i["name"]: i for i in self.sampler.sample("cpu", True, 100, False, True)["processes"]}
+        web = items["steamwebhelper"]
+        self.assertEqual((web["key"], web["count"], web["pid"]), ("name:steamwebhelper", 3, 1300))
+        self.assertEqual(web["cpu"], 12.5)  # (10 + 40 + 0) / 400
+        self.assertEqual(web["mem_mb"], 350.0)
+        self.assertEqual([m["pid"] for m in web["members"]], [1300, 1301, 1305])
+
+    def test_single_process_group(self):  # AC-2
+        items = {i["name"]: i for i in self.sampler.sample("cpu", True, 100, False, True)["processes"]}
+        self.assertEqual((items["bash"]["count"], items["bash"]["members"]), (1, []))
+        self.assertEqual(items["bash"]["key"], "pid:600")
+
+    def test_sort_and_limit_apply_to_groups(self):  # AC-3
+        result = self.sampler.sample("mem", False, 2, False, True)
+        self.assertEqual([i["name"] for i in result["processes"]], ["bash", "steamwebhelper"])
+        self.assertEqual((result["total"], result["shown"], result["process_count"]), (3, 2, 5))
+        names = [i["name"] for i in self.sampler.sample("cpu", True, 100, False, True)["processes"]]
+        self.assertEqual(names, ["game.exe", "steamwebhelper", "bash"])
+
+    def test_flat_mode_keys(self):  # AC-4
+        result = self.sampler.sample("cpu", True, 100, False, False)
+        self.assertEqual(result["total"], 5)
+        self.assertTrue(all(i["key"] == f"pid:{i['pid']}" and i["count"] == 1 for i in result["processes"]))
+
+
 if __name__ == "__main__":
     unittest.main()

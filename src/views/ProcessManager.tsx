@@ -1,12 +1,12 @@
 import { DialogButton, Focusable } from "@decky/ui";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { SortKey, getMetrics, getProcesses } from "../api";
-import { ProcessRow, ProcessTableHeader } from "../components/ProcessTable";
+import { MemberRow, ProcessRow, ProcessTableHeader } from "../components/ProcessTable";
 import { COLORS, fmtMb, fmtPct, loadColor } from "../format";
 import { usePolling } from "../hooks/usePolling";
 import { usePersistentState } from "../settings";
 import { recordMetrics } from "../store";
-import { CSS, PROCESS_CSS } from "../styles";
+import { CSS, GROUP_CSS, PROCESS_CSS } from "../styles";
 
 const PAGE_SIZE = 40;
 const REFRESH_MS = 2000;
@@ -17,14 +17,17 @@ export function ProcessManager() {
   const [sortKey, setSortKey] = usePersistentState<SortKey>("procSort", "cpu");
   const [descending, setDescending] = usePersistentState<boolean>("procDesc", true);
   const [includeKernel, setIncludeKernel] = usePersistentState<boolean>("procKernel", false);
+  const [grouped, setGrouped] = usePersistentState<boolean>("procGroup", true);
   const [limit, setLimit] = useState(PAGE_SIZE);
   const [paused, setPaused] = useState(false);
-  const [expanded, setExpanded] = useState<number | null>(null);
+  // Keyed by item key ("name:x" / "pid:n") so open rows survive reordering.
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
+  const [openDetail, setOpenDetail] = useState<string | null>(null);
 
   const { data, error } = usePolling(
     async () => {
       const [procs, metrics] = await Promise.all([
-        getProcesses(sortKey, descending, limit, includeKernel),
+        getProcesses(sortKey, descending, limit, includeKernel, grouped),
         getMetrics(),
       ]);
       recordMetrics(metrics);
@@ -32,7 +35,7 @@ export function ProcessManager() {
     },
     REFRESH_MS,
     !paused,
-    [sortKey, descending, limit, includeKernel],
+    [sortKey, descending, limit, includeKernel, grouped],
   );
 
   // Any change to what is listed resumes updates, so the user sees the new order.
@@ -52,7 +55,13 @@ export function ProcessManager() {
     setIncludeKernel(!includeKernel);
     setPaused(false);
   };
-  const toggleRow = (pid: number) => setExpanded(expanded === pid ? null : pid);
+  const toggleGrouped = () => {
+    setGrouped(!grouped);
+    setOpenGroup(null);
+    setPaused(false);
+  };
+  const toggleGroup = (key: string) => setOpenGroup(openGroup === key ? null : key);
+  const toggleDetail = (key: string) => setOpenDetail(openDetail === key ? null : key);
 
   const procs = data?.procs;
   const metrics = data?.metrics;
@@ -60,7 +69,7 @@ export function ProcessManager() {
 
   return (
     <div className="ssm-page">
-      <style>{CSS + PROCESS_CSS}</style>
+      <style>{CSS + PROCESS_CSS + GROUP_CSS}</style>
       <Focusable
         className="ssm-page-inner"
         flow-children="column"
@@ -73,9 +82,15 @@ export function ProcessManager() {
           <div className="ssm-proc-title">Processos</div>
           <div className="ssm-proc-summary">
             <span>
-              <span className="ssm-muted">Total </span>
-              <b>{procs?.total ?? "—"}</b>
+              <span className="ssm-muted">Processos </span>
+              <b>{procs?.process_count ?? "—"}</b>
             </span>
+            {grouped && procs && (
+              <span>
+                <span className="ssm-muted">Grupos </span>
+                <b>{procs.total}</b>
+              </span>
+            )}
             <span>
               <span className="ssm-muted">CPU </span>
               <b style={{ color: loadColor(metrics?.cpu.usage) }}>{fmtPct(metrics?.cpu.usage)}</b>
@@ -94,6 +109,9 @@ export function ProcessManager() {
           <DialogButton className="ssm-tool-btn" onClick={togglePause}>
             {paused ? "▶ Retomar" : "❚❚ Pausar"}
           </DialogButton>
+          <DialogButton className="ssm-tool-btn" onClick={toggleGrouped}>
+            {grouped ? "Desagrupar" : "Agrupar"}
+          </DialogButton>
           <DialogButton className="ssm-tool-btn" onClick={toggleKernel}>
             {includeKernel ? "Ocultar kernel" : "Mostrar kernel"}
           </DialogButton>
@@ -107,9 +125,26 @@ export function ProcessManager() {
         <Focusable flow-children="column" className="ssm-tbody">
           {error && <div className="ssm-error">Erro ao ler processos: {error}</div>}
           {!procs && !error && <div className="ssm-muted" style={{ padding: 12 }}>Carregando…</div>}
-          {procs?.processes.map((p, i) => (
-            <ProcessRow key={p.pid} p={p} index={i} expanded={expanded === p.pid} onToggle={toggleRow} />
-          ))}
+          {procs?.processes.map((item, i) => {
+            const isGroup = item.count > 1;
+            const open = isGroup ? openGroup === item.key : openDetail === item.key;
+            return (
+              <Fragment key={item.key}>
+                <ProcessRow item={item} index={i} expanded={open} onToggle={isGroup ? toggleGroup : toggleDetail} />
+                {isGroup &&
+                  open &&
+                  item.members.map((m, j) => (
+                    <MemberRow
+                      key={m.pid}
+                      p={m}
+                      last={j === item.members.length - 1}
+                      expanded={openDetail === `pid:${m.pid}`}
+                      onToggle={toggleDetail}
+                    />
+                  ))}
+              </Fragment>
+            );
+          })}
           {remaining > 0 && (
             <DialogButton className="ssm-more-btn" onClick={() => setLimit(limit + PAGE_SIZE)}>
               Mostrar mais ({remaining} restantes)

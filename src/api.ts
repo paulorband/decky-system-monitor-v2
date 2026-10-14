@@ -74,12 +74,20 @@ export interface ProcessInfo {
   ppid: number;
 }
 
+/** A process, or a group of same-named processes (specs/005-agrupamento-processos). */
+export interface ProcessItem extends ProcessInfo {
+  key: string;
+  count: number;
+  members: ProcessInfo[];
+}
+
 export interface ProcessList {
   total: number;
   shown: number;
+  process_count: number;
   cpu_count: number;
   mem_total_mb: number | null;
-  processes: ProcessInfo[];
+  processes: ProcessItem[];
 }
 
-export const getProcesses = callable<[SortKey, boolean, number, boolean], ProcessList>("get_processes");
+export const getProcesses = callable<[SortKey, boolean, number, boolean, boolean], ProcessList>("get_processes");

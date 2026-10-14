@@ -9,6 +9,7 @@ from .fsutil import read_str
 KTHREADD_PID = 2
 SORT_KEYS = ("name", "cpu", "mem")
 CMD_MAX = 300
+MAX_MEMBERS = 50
 
 ProcKey = Tuple[int, int]  # (pid, starttime) uniquely identifies a process across PID reuse
 
@@ -117,6 +118,7 @@ class ProcessSampler:
         descending: bool = True,
         limit: int = 40,
         include_kernel: bool = False,
+        group: bool = False,
     ) -> dict:
         if sort_key not in SORT_KEYS:
             sort_key = "cpu"
@@ -164,18 +166,56 @@ class ProcessSampler:
             if key not in current:
                 del self._names[key]
 
-        if sort_key == "name":
-            rows.sort(key=lambda r: (r["name"].lower(), r["pid"]), reverse=descending)
-        elif sort_key == "cpu":
-            rows.sort(key=lambda r: (r["cpu"], r["mem_mb"]), reverse=descending)
-        else:
-            rows.sort(key=lambda r: (r["mem_mb"], r["cpu"]), reverse=descending)
+        process_count = len(rows)
+        items = _group(rows) if group else [_single(r) for r in rows]
+        _sort(items, sort_key, descending)
 
         limit = max(1, int(limit))
         return {
-            "total": len(rows),
-            "shown": min(limit, len(rows)),
+            "total": len(items),
+            "shown": min(limit, len(items)),
+            "process_count": process_count,
             "cpu_count": self.cpu_count,
             "mem_total_mb": round(mem_total_kb / 1024) if mem_total_kb else None,
-            "processes": rows[:limit],
+            "processes": items[:limit],
         }
+
+
+def _sort(items: List[dict], sort_key: str, descending: bool) -> None:
+    if sort_key == "name":
+        items.sort(key=lambda r: (r["name"].lower(), r["pid"]), reverse=descending)
+    elif sort_key == "cpu":
+        items.sort(key=lambda r: (r["cpu"], r["mem_mb"]), reverse=descending)
+    else:
+        items.sort(key=lambda r: (r["mem_mb"], r["cpu"]), reverse=descending)
+
+
+def _single(row: dict) -> dict:
+    return {**row, "key": f"pid:{row['pid']}", "count": 1, "members": []}
+
+
+def _group(rows: List[dict]) -> List[dict]:
+    """Merge processes sharing a name into one item with summed usage (spec 005)."""
+    by_name: Dict[str, List[dict]] = {}
+    for row in rows:
+        by_name.setdefault(row["name"], []).append(row)
+
+    items = []
+    for name, members in by_name.items():
+        if len(members) == 1:
+            items.append(_single(members[0]))
+            continue
+        main = min(members, key=lambda r: r["pid"])
+        mem_percents = [m["mem_percent"] for m in members if m["mem_percent"] is not None]
+        members.sort(key=lambda r: (r["cpu"], r["mem_mb"]), reverse=True)
+        items.append({
+            **main,
+            "key": f"name:{name}",
+            "count": len(members),
+            "cpu": round(min(sum(m["cpu"] for m in members), 100.0), 1),
+            "mem_mb": round(sum(m["mem_mb"] for m in members), 1),
+            "mem_percent": round(sum(mem_percents), 1) if mem_percents else None,
+            "threads": sum(m["threads"] for m in members),
+            "members": members[:MAX_MEMBERS],
+        })
+    return items

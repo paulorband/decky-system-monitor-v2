@@ -23,7 +23,9 @@ Funciona em SteamOS (Steam Deck), Bazzite e CachyOS Handheld (ROG Ally / Ally X,
 | **A** no cabeçalho (Processo / CPU / RAM) | ordena pela coluna; de novo inverte a ordem |
 | **X** | alterna a coluna de ordenação (CPU → RAM → Nome) |
 | **Y** | pausa/retoma a atualização (útil para navegar sem a lista mudar) |
+| **A** num grupo (`steamwebhelper ×8`) | mostra as instâncias do grupo |
 | **A** na linha | mostra linha de comando, PPID, threads e estado |
+| "Agrupar" / "Desagrupar" | junta processos de mesmo nome somando CPU e RAM (ligado por padrão) |
 | **B** | volta |
 
 CPU % de um processo é relativo à máquina inteira (100% = todos os núcleos ocupados), como no Gerenciador de Tarefas do Windows.
