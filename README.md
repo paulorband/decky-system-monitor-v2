@@ -62,7 +62,7 @@ ative o **Modo desenvolvedor** (permite instalar de ZIP e ver logs).
 ### 2. Configurar a chave SSH (no Windows, uma vez)
 
 ```bash
-type %USERPROFILE%\.ssh\id_ed25519.pub | ssh SEU_USUARIO@IP_DO_ALLY "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
+cat ~/.ssh/id_ed25519.pub | ssh SEU_USUARIO@IP_DO_ALLY "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
 ```
 
 ### 3. Configurar o deploy
