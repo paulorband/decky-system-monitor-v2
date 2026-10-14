@@ -1,0 +1,8 @@
+node_modules/
+dist/
+out/
+*.zip
+__pycache__/
+*.pyc
+.env.deploy
+.venv/

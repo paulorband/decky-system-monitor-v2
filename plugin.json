@@ -1,0 +1,11 @@
+{
+  "name": "System Monitor",
+  "author": "Paulo Bandeira",
+  "flags": [],
+  "api_version": 1,
+  "publish": {
+    "tags": ["monitor", "performance", "processes"],
+    "description": "Monitor de recursos do sistema (CPU, GPU, RAM, bateria, temperaturas) e gerenciador de processos para o Game Mode.",
+    "image": ""
+  }
+}
