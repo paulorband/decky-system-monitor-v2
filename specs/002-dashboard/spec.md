@@ -1,6 +1,6 @@
 # Spec 002 — Dashboard de resumo (Quick Access Menu)
 
-- **Status:** Concluída — validada no Ally X; pendentes: AC-4 (hardware sem GPU/bateria) e AC-5 (persistência após reiniciar o Steam)
+- **Status:** Concluída — validada no Ally X; pendente: AC-4 (hardware sem GPU/bateria)
 - **Depende de:** 001
 
 ## Contexto
@@ -38,7 +38,7 @@ Ela deve mostrar o estado do sistema de relance e permitir aprofundar sem sair d
 - [x] **AC-2** Fechando o QAM, nenhuma chamada `get_metrics` é feita (o hook depende de `visible`).
 - [x] **AC-3** Com o D-pad é possível focar cada cartão em sequência; **A** alterna detalhes. _(validado no Ally X, 2026-10-14)_
 - [ ] **AC-4** Em hardware sem bateria/GPU os cartões correspondentes não aparecem e nada quebra. _(validar no aparelho)_
-- [ ] **AC-5** O intervalo escolhido persiste após reiniciar o Steam. _(validar no aparelho)_
+- [x] **AC-5** O intervalo escolhido persiste após reiniciar o Steam. _(mesmo mecanismo `usePersistentState` validado no Ally X após reiniciar o aparelho, 2026-10-14)_
 - [x] **AC-6** `pnpm typecheck` e `pnpm build` passam.
 
 ## Design

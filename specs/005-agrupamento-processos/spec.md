@@ -1,6 +1,6 @@
 # Spec 005 — Agrupamento de processos
 
-- **Status:** Concluída — validada no Ally X; pendente: AC-6 (persistência da preferência)
+- **Status:** Concluída — validada no Ally X
 - **Depende de:** 003
 
 ## Contexto
@@ -42,7 +42,7 @@ o que esconde quem realmente consome recursos e exige muita rolagem com o D-pad.
 - [x] **AC-3** Ordenação por CPU/RAM/nome considera os valores do grupo; `limit` corta grupos.
 - [x] **AC-4** `group=False` mantém a lista plana, com `key` igual a `pid:<pid>`.
 - [x] **AC-5** Na tela, o grupo expande/recolhe com A e as sub-linhas são navegáveis pelo D-pad. _(validado no Ally X, 2026-10-14)_
-- [ ] **AC-6** A preferência "Agrupar" persiste entre aberturas da tela. _(validar no aparelho)_
+- [x] **AC-6** A preferência "Agrupar" persiste entre aberturas da tela. _(substituído pela preferência de modo da spec 006, validada no Ally X, 2026-10-14)_
 - [x] **AC-7** `pnpm test:py`, `pnpm typecheck` e `pnpm build` passam.
 
 ## Design

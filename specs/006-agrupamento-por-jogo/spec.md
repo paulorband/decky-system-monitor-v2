@@ -1,6 +1,6 @@
 # Spec 006 — Agrupamento de processos por jogo (AppID)
 
-- **Status:** Concluída — validada no Ally X; pendente: AC-8 (ciclo dos três modos e persistência)
+- **Status:** Concluída — validada no Ally X
 - **Depende de:** 005
 
 ## Contexto
@@ -49,7 +49,7 @@ Agrupando só pelo nome (spec 005), o consumo do jogo fica espalhado pela lista.
 - [x] **AC-5** `group=True` ≡ `"name"`, `group=False` ≡ `"none"`; itens trazem `kind` e `app_id`.
 - [x] **AC-6** `pnpm test:py`, `pnpm typecheck` e `pnpm build` passam.
 - [x] **AC-7** No Ally X, com um jogo aberto, ele aparece como uma linha com selo JOGO e expande para seus processos. _(validado no Ally X com God of War Ragnarök: 17 processos, 2026-10-14)_
-- [ ] **AC-8** O botão alterna os três modos e a escolha persiste. _(validar no aparelho)_
+- [x] **AC-8** O botão alterna os três modos e a escolha persiste. _(validado no Ally X, persiste após reiniciar o aparelho, 2026-10-14)_
 
 ## Design
 - `py_modules/sysmon/steamapps.py` — `SteamLibrary(root, steam_dirs)` com `game_name(app_id)`.
