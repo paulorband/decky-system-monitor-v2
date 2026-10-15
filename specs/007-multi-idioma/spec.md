@@ -1,6 +1,6 @@
 # Spec 007 — Multi-idioma
 
-- **Status:** Concluída — AC-6/AC-7 dependem de teste no Ally X
+- **Status:** Concluída — validada no Ally X; pendente: AC-7 (idioma escolhido persiste após reiniciar)
 - **Depende de:** 002, 003, 005, 006
 
 ## Contexto
@@ -47,8 +47,8 @@ e permitir trocar manualmente. Adicionar um idioma novo deve exigir só um arqui
 - [x] **AC-3** Nenhum texto de interface em português permanece fixo nos componentes (`src/**/*.tsx`, `format.ts`).
 - [x] **AC-4** Steam em `brazilian` → pt-BR; `latam`/`spanish` → es; `german` → en (lógica de `matchLanguage`).
 - [x] **AC-5** `pnpm typecheck` e `pnpm build` passam.
-- [ ] **AC-6** No Ally X, com a Steam em português, o plugin abre em pt-BR; mudando para inglês no seletor, painel e
-  tela de processos mudam na hora. _(validar no aparelho)_
+- [x] **AC-6** No Ally X, com a Steam em português, o plugin abre em pt-BR; mudando para inglês no seletor, painel e
+  tela de processos mudam na hora. _(validado no Ally X, 2026-10-14)_
 - [ ] **AC-7** A escolha de idioma persiste após reiniciar. _(validar no aparelho)_
 
 ## Design
