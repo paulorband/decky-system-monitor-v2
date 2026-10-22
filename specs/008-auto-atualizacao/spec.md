@@ -1,6 +1,6 @@
 # Spec 008 — Atualização automática
 
-- **Status:** Concluída — releases publicadas e fluxo validado contra o GitHub; AC-9..AC-11 dependem de teste no Ally X
+- **Status:** Concluída — validada no Ally X (v0.1.0 → v0.2.0); pendente: AC-11 (canal de teste)
 - **Depende de:** 004, 007
 - **Referência:** porta da spec 009 do plugin anterior (`decky-system-monitor`), já validada lá; os IDs `REQ-6xx`
   abaixo são os mesmos para facilitar a comparação.
@@ -98,8 +98,8 @@ Repositório `paulorband/decky-system-monitor-v2`. Asset de cada release: `steam
 - [x] **AC-7** Ponta a ponta contra o GitHub real: instalação simulada `0.0.1` → `check` encontra `0.1.0`;
   `install` baixa, confere o SHA-256, valida e aplica, gravando `build.json` com `kind: stable` _(2026-10-22)_.
 - [x] **AC-8** Canal de teste com `test-build` do mesmo commit da `v0.1.0` é tratado como a estável (REQ-657) _(2026-10-22)_.
-- [ ] **AC-9** Com uma release `v0.2.0` publicada e `v0.1.0` instalada, o toast aparece ao iniciar. _(validar no aparelho)_
-- [ ] **AC-10** "Instalar v0.2.0" instala, o Decky reinicia e o painel mostra a nova versão. _(validar no aparelho)_
+- [x] **AC-9** Com uma release `v0.2.0` publicada e `v0.1.0` instalada, o toast aparece ao iniciar. _(validado no Ally X, 2026-10-22)_
+- [x] **AC-10** "Instalar v0.2.0" instala, o Decky reinicia e o painel mostra a nova versão. _(validado no Ally X, 2026-10-22)_
 - [ ] **AC-11** Canal de teste: confirmação por modal e instalação do `test-build`. _(validar no aparelho)_
 
 ## Design
