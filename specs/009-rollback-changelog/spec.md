@@ -1,6 +1,6 @@
 # Spec 009 — Rollback e changelog
 
-- **Status:** Concluída — validada no Ally X; pendente: AC-10 (`deploy.sh --rollback`)
+- **Status:** Concluída — validada no Ally X
 - **Depende de:** 004, 008
 
 ## Contexto
@@ -66,7 +66,7 @@ para a versão anterior sem computador, e saber o que muda antes de instalar.
   2026-10-22 pelo caminho do próprio plugin: atualização v0.3.0 → v0.4.0 guardou a v0.3.0, e o rollback a restaurou)_
 - [x] **AC-9** "Histórico de versões" e "Novidades" abrem o modal, rolam com o D-pad e fecham com B. _("Histórico de
   versões" validado no Ally X, 2026-10-22; "Novidades" usa o mesmo modal)_
-- [ ] **AC-10** `deploy.sh --rollback` restaura a cópia pelo SSH. _(validar no aparelho)_
+- [x] **AC-10** `deploy.sh --rollback` restaura a cópia pelo SSH. _(validado no Ally X, 2026-10-22)_
 
 ## Design
 - `updater.py`: `save_rollback()`, `rollback_info()`, `rollback()`, `apply_package(..., exact=)`, `notes` no estado;
