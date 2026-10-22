@@ -44,6 +44,8 @@ HTTPS e a validação do conteúdo (REQ-633/634) continuam iguais.
 - [x] **AC-4** Sem manifesto (404), o resultado é o mesmo da spec 008 pela API; erro de rede no manifesto vira erro, sem chamar a API.
 - [x] **AC-5** `test-build` do mesmo commit da estável é tratado como a estável usando o commit do manifesto.
 - [x] **AC-6** `pnpm test:py`, `pnpm typecheck`, `pnpm build` passam; o manifesto gerado localmente confere com o zip.
+- [x] **AC-8** Contra o GitHub real com a API esgotada (0/60): uma instalação `0.3.0` encontrou e instalou a
+  `v0.4.0` com **zero** chamadas à API, guardando a `0.3.0` como cópia de rollback _(2026-10-22)_.
 - [ ] **AC-7** No Ally X, com a API esgotada, a v0.4.0+ verifica e instala normalmente. _(validar no aparelho)_
 
 ## Limitações
