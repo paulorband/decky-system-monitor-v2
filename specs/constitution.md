@@ -20,7 +20,9 @@ O monitor não pode roubar desempenho do jogo.
 Alvos: SteamOS (Steam Deck LCD/OLED), Bazzite e CachyOS Handheld (ROG Ally / Ally X, Legion Go, etc.).
 - Nunca assumir nomes de dispositivos fixos: descobrir sensores por `hwmon/name`, `power_supply/type`, `drm/card*/device/vendor`.
 - Métrica indisponível = `null` no contrato e "—" na UI. Nunca quebrar a tela por falta de um sensor.
-- Não exigir root (`flags: []`): apenas leitura de arquivos públicos de `/proc` e `/sys`.
+- Coleta de métricas sem privilégio: apenas leitura de `/proc` e `/sys`. **Exceção (spec 008):** o backend declara
+  `flags: ["root"]` só porque a auto-atualização precisa escrever em `~/homebrew/plugins` (dono: root) e reiniciar o
+  `plugin_loader`; nenhuma métrica depende disso e a coleta continua só lendo arquivos.
 
 ## IV. Legibilidade das métricas
 - Números grandes para o valor principal, rótulo curto, unidade explícita.

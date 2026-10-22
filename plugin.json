@@ -1,7 +1,7 @@
 {
   "name": "System Monitor",
   "author": "Paulo Bandeira",
-  "flags": [],
+  "flags": ["root"],
   "api_version": 1,
   "publish": {
     "tags": ["monitor", "performance", "processes"],

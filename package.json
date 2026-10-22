@@ -4,12 +4,13 @@
   "description": "Decky Loader plugin: system resource monitor and process manager for Game Mode",
   "type": "module",
   "license": "BSD-3-Clause",
+  "packageManager": "pnpm@12.11.2",
   "scripts": {
     "build": "rollup -c",
     "watch": "rollup -c -w",
     "typecheck": "tsc --noEmit",
     "check:i18n": "node scripts/check-locales.mjs",
-    "test:py": "uv run --no-project --python 3.11 python -m unittest discover -s tests -v",
+    "test:py": "uv run --no-project --python 3.11 --with pytest python -m pytest -q tests",
     "deploy:ssh": "node scripts/bash.mjs scripts/deploy.sh",
     "deploy:logs": "node scripts/bash.mjs scripts/deploy.sh --logs",
     "package": "node scripts/bash.mjs scripts/deploy.sh --package-only"

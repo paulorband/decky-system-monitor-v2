@@ -27,3 +27,4 @@ Toda spec deve respeitar a [constituição](constitution.md).
 | [005](005-agrupamento-processos/spec.md) | Agrupamento de processos | Concluída |
 | [006](006-agrupamento-por-jogo/spec.md) | Agrupamento por jogo (AppID) | Concluída |
 | [007](007-multi-idioma/spec.md) | Multi-idioma | Concluída |
+| [008](008-auto-atualizacao/spec.md) | Atualização automática | Concluída |

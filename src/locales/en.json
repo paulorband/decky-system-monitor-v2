@@ -1,34 +1,29 @@
 {
   "_meta": {
     "name": "English",
-    "steamLanguages": ["english"]
+    "steamLanguages": [
+      "english"
+    ]
   },
-
   "common.loading": "Loading…",
   "common.details": "Details",
   "common.collapse": "Collapse",
-
   "dashboard.processManager": "Process manager",
   "dashboard.error": "Failed to read metrics: {error}",
   "dashboard.settings": "Settings",
   "dashboard.refresh": "Refresh rate",
   "dashboard.language": "Language",
   "dashboard.languageAuto": "Automatic (Steam)",
-
   "summary.battery": "BAT",
-
   "cpu.temp": "Temp",
   "cpu.clock": "Clock",
   "cpu.cores": "Cores",
   "cpu.load": "Load",
   "cpu.max": "Max",
-
   "gpu.temp": "Temp",
   "gpu.clock": "Clock",
   "gpu.gtt": "GTT (shared memory)",
-
   "memory.title": "Memory",
-
   "battery.title": "Battery",
   "battery.health": "Health",
   "battery.input": "Input",
@@ -40,12 +35,10 @@
   "battery.status.Full": "Full",
   "battery.status.NotCharging": "Plugged in",
   "battery.status.Unknown": "Unknown",
-
   "fans.title": "Fans",
   "fans.mid": "Middle",
   "fans.fan": "Fan",
   "fans.fanNumbered": "Fan {n}",
-
   "proc.title": "Processes",
   "proc.processes": "Processes",
   "proc.groups": "Groups",
@@ -79,5 +72,32 @@
   "proc.state.Z": "Zombie",
   "proc.state.T": "Stopped",
   "proc.state.t": "Traced",
-  "proc.state.I": "Idle"
+  "proc.state.I": "Idle",
+  "update.title": "Updates",
+  "update.current": "Current version",
+  "update.latest": "New version",
+  "update.status": "Status",
+  "update.upToDate": "You are up to date",
+  "update.notChecked": "Not checked yet",
+  "update.checkNow": "Check for updates",
+  "update.checking": "Checking…",
+  "update.install": "Install {v}",
+  "update.installTest": "Install test build {v}",
+  "update.installing": "Installing…",
+  "update.installOk": "Installed {v}. Decky is restarting to load it…",
+  "update.installFailed": "Update failed: {e}",
+  "update.checkFailed": "Could not check for updates: {e}",
+  "update.restartHint": "Installed. If Decky does not restart by itself, reboot the device (or restart plugin_loader in Desktop Mode) to finish.",
+  "update.autoCheck": "Check for updates at startup",
+  "update.toastTitle": "System Monitor update",
+  "update.toastBody": "Version {v} is available. Open the plugin to install it.",
+  "update.toastBodyTest": "Test build {v} is available. Open the plugin to install it.",
+  "update.testChannel": "Include test builds",
+  "update.testWarning": "Test builds are unreleased and may contain bugs. They can break the plugin, and there is no automatic rollback. Only enable this to help test.",
+  "update.testHint": "⚠ Test builds may contain bugs and break the plugin. No automatic rollback.",
+  "update.rateLimited": "GitHub request limit reached. Try again in about {m} min.",
+  "update.testEnableTitle": "Enable test builds?",
+  "update.testEnableOk": "Enable",
+  "update.testEnableCancel": "Cancel",
+  "update.testLabel": "test {c}"
 }

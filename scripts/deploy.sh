@@ -81,6 +81,10 @@ cp main.py plugin.json package.json LICENSE "$STAGE/"
 [[ -f README.md ]] && cp README.md "$STAGE/"
 cp -r py_modules "$STAGE/"
 find "$STAGE" -name '__pycache__' -type d -prune -exec rm -rf {} +
+# Build identity (spec 008 REQ-652): lets the updater tell builds of the same version apart.
+BUILD_COMMIT="${GITHUB_SHA:-$(git rev-parse HEAD 2>/dev/null || echo unknown)}"
+node -e 'const v=require("./package.json").version;require("fs").writeFileSync(process.argv[1],JSON.stringify({version:v,commit:process.argv[2]})+"\n")' \
+  "$STAGE/build.json" "$BUILD_COMMIT"
 
 make_zip() {
   local zip_path="$OUT_DIR/$PLUGIN_NAME.zip"

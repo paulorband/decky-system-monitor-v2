@@ -1,0 +1,69 @@
+# Build & release (specs/008-auto-atualizacao, REQ-640/652), ported from the previous plugin.
+# - push of a tag vX.Y.Z  -> versioned release with steam-system-monitor.zip (tag must match package.json)
+# - push to a branch      -> rolling "test-build" prerelease (opt-in test channel, REQ-650)
+name: Build & release
+
+on:
+  push:
+    branches: [main, "feature/**", "hotfix/**"]
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Release tag to create (e.g. v0.2.0 or v0.2.0-rc1). Empty = only refresh test-build."
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm check:i18n
+      - run: pip install pytest && python -m pytest -q tests
+      - run: bash scripts/deploy.sh --package-only
+      - uses: actions/upload-artifact@v4
+        with:
+          name: steam-system-monitor
+          path: out/steam-system-monitor.zip
+
+      # Tag push, or manual run with `version` -> release (prerelease if the tag contains "-").
+      - name: Publish versioned release
+        if: startsWith(github.ref, 'refs/tags/v') || inputs.version != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version || github.ref_name }}
+        run: |
+          case "$VERSION" in v[0-9]*) ;; *) echo "bad version: $VERSION"; exit 1;; esac
+          PKG="v$(node -p "require('./package.json').version")"
+          if [ "$VERSION" != "$PKG" ]; then echo "tag $VERSION != package.json $PKG"; exit 1; fi
+          if gh release view "$VERSION" >/dev/null 2>&1; then echo "$VERSION already exists"; exit 0; fi
+          flags=""
+          case "$VERSION" in *-*) flags="--prerelease";; esac
+          gh release create "$VERSION" out/steam-system-monitor.zip \
+            --target "$GITHUB_SHA" --title "$VERSION" --generate-notes $flags
+
+      # Branch push / manual run -> rolling "test-build" prerelease for device testing.
+      - name: Publish rolling test build
+        if: ${{ !startsWith(github.ref, 'refs/tags/') && inputs.version == '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete test-build --cleanup-tag --yes || true
+          gh release create test-build out/steam-system-monitor.zip \
+            --prerelease --target "$GITHUB_SHA" \
+            --title "Test build ($GITHUB_REF_NAME @ ${GITHUB_SHA::7})" \
+            --notes "$(printf 'version: %s\ncommit: %s\n\nAutomatic TEST build from `%s`. Not a stable release: may contain bugs.' "$(node -p "require('./package.json').version")" "$GITHUB_SHA" "$GITHUB_REF_NAME")"

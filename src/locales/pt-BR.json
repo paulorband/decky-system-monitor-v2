@@ -1,34 +1,30 @@
 {
   "_meta": {
     "name": "Português (Brasil)",
-    "steamLanguages": ["brazilian", "portuguese"]
+    "steamLanguages": [
+      "brazilian",
+      "portuguese"
+    ]
   },
-
   "common.loading": "Carregando…",
   "common.details": "Detalhes",
   "common.collapse": "Recolher",
-
   "dashboard.processManager": "Gerenciador de processos",
   "dashboard.error": "Erro ao ler métricas: {error}",
   "dashboard.settings": "Configurações",
   "dashboard.refresh": "Atualização",
   "dashboard.language": "Idioma",
   "dashboard.languageAuto": "Automático (Steam)",
-
   "summary.battery": "BAT",
-
   "cpu.temp": "Temp",
   "cpu.clock": "Clock",
   "cpu.cores": "Núcleos",
   "cpu.load": "Carga",
   "cpu.max": "Máx",
-
   "gpu.temp": "Temp",
   "gpu.clock": "Clock",
   "gpu.gtt": "GTT (memória compartilhada)",
-
   "memory.title": "Memória",
-
   "battery.title": "Bateria",
   "battery.health": "Saúde",
   "battery.input": "Entrada",
@@ -40,12 +36,10 @@
   "battery.status.Full": "Carregada",
   "battery.status.NotCharging": "Na tomada",
   "battery.status.Unknown": "Desconhecido",
-
   "fans.title": "Ventoinhas",
   "fans.mid": "Central",
   "fans.fan": "Ventoinha",
   "fans.fanNumbered": "Ventoinha {n}",
-
   "proc.title": "Processos",
   "proc.processes": "Processos",
   "proc.groups": "Grupos",
@@ -79,5 +73,32 @@
   "proc.state.Z": "Zumbi",
   "proc.state.T": "Parado",
   "proc.state.t": "Rastreado",
-  "proc.state.I": "Ocioso"
+  "proc.state.I": "Ocioso",
+  "update.title": "Atualizações",
+  "update.current": "Versão atual",
+  "update.latest": "Nova versão",
+  "update.status": "Estado",
+  "update.upToDate": "Você está atualizado",
+  "update.notChecked": "Ainda não verificado",
+  "update.checkNow": "Verificar atualizações",
+  "update.checking": "Verificando…",
+  "update.install": "Instalar {v}",
+  "update.installTest": "Instalar build de teste {v}",
+  "update.installing": "Instalando…",
+  "update.installOk": "{v} instalada. O Decky está reiniciando para carregá-la…",
+  "update.installFailed": "Falha na atualização: {e}",
+  "update.checkFailed": "Não foi possível verificar atualizações: {e}",
+  "update.restartHint": "Instalada. Se o Decky não reiniciar sozinho, reinicie o aparelho (ou o plugin_loader no modo desktop) para concluir.",
+  "update.autoCheck": "Verificar atualizações ao iniciar",
+  "update.toastTitle": "Atualização do System Monitor",
+  "update.toastBody": "A versão {v} está disponível. Abra o plugin para instalar.",
+  "update.toastBodyTest": "O build de teste {v} está disponível. Abra o plugin para instalar.",
+  "update.testChannel": "Incluir builds de teste",
+  "update.testWarning": "Builds de teste não foram publicadas e podem conter erros. Elas podem deixar o plugin inoperante, e não há reversão automática. Ative apenas para ajudar a testar.",
+  "update.testHint": "⚠ Builds de teste podem conter erros e deixar o plugin inoperante. Sem reversão automática.",
+  "update.rateLimited": "Limite de requisições do GitHub atingido. Tente de novo em cerca de {m} min.",
+  "update.testEnableTitle": "Ativar builds de teste?",
+  "update.testEnableOk": "Ativar",
+  "update.testEnableCancel": "Cancelar",
+  "update.testLabel": "teste {c}"
 }

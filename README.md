@@ -30,6 +30,29 @@ Funciona em SteamOS (Steam Deck), Bazzite e CachyOS Handheld (ROG Ally / Ally X,
 
 CPU % de um processo é relativo à máquina inteira (100% = todos os núcleos ocupados), como no Gerenciador de Tarefas do Windows.
 
+## Atualizações
+
+O plugin verifica as [releases do GitHub](https://github.com/paulorband/decky-system-monitor-v2/releases) ao iniciar
+e avisa com uma notificação quando há versão nova. Em **Atualizações** (fim do painel) dá para verificar e instalar
+pelo controle; o Decky reinicia sozinho para carregar a nova versão.
+
+- A instalação confere origem, SHA-256 do arquivo e conteúdo do zip, e restaura a versão anterior se algo falhar.
+- **Incluir builds de teste** (desligado por padrão) oferece o build automático do último commit — pode conter erros.
+- Por isso o backend roda como root (`flags: ["root"]`): a pasta `~/homebrew/plugins` pertence ao root.
+
+**Publicar uma versão:** atualize `version` no `package.json`, faça o commit e envie a tag correspondente:
+
+```bash
+git tag v0.2.0
+```
+
+```bash
+git push origin main --tags
+```
+
+O workflow `.github/workflows/release.yml` testa, empacota e publica `steam-system-monitor.zip` (a tag precisa ser
+igual a `v` + versão do `package.json`). Cada push em `main` também atualiza o pré-release `test-build`.
+
 ## Idiomas
 
 Português do Brasil, Inglês e Espanhol. Por padrão o plugin segue o idioma da Steam (inglês se não for suportado);

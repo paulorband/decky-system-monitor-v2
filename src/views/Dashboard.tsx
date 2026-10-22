@@ -5,6 +5,7 @@ import { Bar } from "../components/Bar";
 import { MetricCard, Stat } from "../components/MetricCard";
 import { Sparkline } from "../components/Sparkline";
 import { SummaryStrip } from "../components/SummaryStrip";
+import { UpdateSection, UpdateSettings } from "../components/UpdateSection";
 import {
   COLORS,
   batteryColor,
@@ -25,6 +26,7 @@ import { PROCESSES_ROUTE } from "../routes";
 import { REFRESH_INTERVALS_MS, usePersistentState } from "../settings";
 import { getHistory, recordMetrics } from "../store";
 import { CSS } from "../styles";
+import { useUpdates } from "../updates";
 
 async function fetchAndRecord(): Promise<Metrics> {
   const m = await getMetrics();
@@ -186,6 +188,7 @@ function FansCard({ m }: { m: Metrics }) {
 export function Dashboard() {
   const visible = useQuickAccessVisible();
   const { preference } = useI18n();
+  const updates = useUpdates();
   const [refreshMs, setRefreshMs] = usePersistentState<number>("refreshMs", 1000);
   const { data: m, error } = usePolling(fetchAndRecord, refreshMs, visible);
 
@@ -236,7 +239,9 @@ export function Dashboard() {
             onChange={(opt) => setLanguagePreference(opt.data as string)}
           />
         </PanelSectionRow>
+        <UpdateSettings onChannelChange={updates.check} />
       </PanelSection>
+      <UpdateSection u={updates} />
     </>
   );
 }

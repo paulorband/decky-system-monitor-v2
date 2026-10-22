@@ -1,34 +1,30 @@
 {
   "_meta": {
     "name": "Español",
-    "steamLanguages": ["spanish", "latam"]
+    "steamLanguages": [
+      "spanish",
+      "latam"
+    ]
   },
-
   "common.loading": "Cargando…",
   "common.details": "Detalles",
   "common.collapse": "Contraer",
-
   "dashboard.processManager": "Administrador de procesos",
   "dashboard.error": "Error al leer las métricas: {error}",
   "dashboard.settings": "Configuración",
   "dashboard.refresh": "Actualización",
   "dashboard.language": "Idioma",
   "dashboard.languageAuto": "Automático (Steam)",
-
   "summary.battery": "BAT",
-
   "cpu.temp": "Temp",
   "cpu.clock": "Reloj",
   "cpu.cores": "Núcleos",
   "cpu.load": "Carga",
   "cpu.max": "Máx",
-
   "gpu.temp": "Temp",
   "gpu.clock": "Reloj",
   "gpu.gtt": "GTT (memoria compartida)",
-
   "memory.title": "Memoria",
-
   "battery.title": "Batería",
   "battery.health": "Salud",
   "battery.input": "Entrada",
@@ -40,12 +36,10 @@
   "battery.status.Full": "Cargada",
   "battery.status.NotCharging": "Conectada",
   "battery.status.Unknown": "Desconocido",
-
   "fans.title": "Ventiladores",
   "fans.mid": "Central",
   "fans.fan": "Ventilador",
   "fans.fanNumbered": "Ventilador {n}",
-
   "proc.title": "Procesos",
   "proc.processes": "Procesos",
   "proc.groups": "Grupos",
@@ -79,5 +73,32 @@
   "proc.state.Z": "Zombi",
   "proc.state.T": "Detenido",
   "proc.state.t": "Rastreado",
-  "proc.state.I": "Inactivo"
+  "proc.state.I": "Inactivo",
+  "update.title": "Actualizaciones",
+  "update.current": "Versión actual",
+  "update.latest": "Nueva versión",
+  "update.status": "Estado",
+  "update.upToDate": "Está actualizado",
+  "update.notChecked": "Aún no comprobado",
+  "update.checkNow": "Buscar actualizaciones",
+  "update.checking": "Buscando…",
+  "update.install": "Instalar {v}",
+  "update.installTest": "Instalar build de prueba {v}",
+  "update.installing": "Instalando…",
+  "update.installOk": "{v} instalada. Decky se está reiniciando para cargarla…",
+  "update.installFailed": "Error al actualizar: {e}",
+  "update.checkFailed": "No se pudo buscar actualizaciones: {e}",
+  "update.restartHint": "Instalada. Si Decky no se reinicia solo, reinicia el equipo (o plugin_loader en el modo escritorio) para terminar.",
+  "update.autoCheck": "Buscar actualizaciones al iniciar",
+  "update.toastTitle": "Actualización de System Monitor",
+  "update.toastBody": "La versión {v} está disponible. Abre el plugin para instalarla.",
+  "update.toastBodyTest": "El build de prueba {v} está disponible. Abre el plugin para instalarlo.",
+  "update.testChannel": "Incluir builds de prueba",
+  "update.testWarning": "Los builds de prueba no están publicados y pueden contener errores. Pueden dejar el plugin inutilizable y no hay reversión automática. Actívalo solo para ayudar a probar.",
+  "update.testHint": "⚠ Los builds de prueba pueden contener errores y dejar el plugin inutilizable. Sin reversión automática.",
+  "update.rateLimited": "Se alcanzó el límite de solicitudes de GitHub. Inténtalo de nuevo en unos {m} min.",
+  "update.testEnableTitle": "¿Activar builds de prueba?",
+  "update.testEnableOk": "Activar",
+  "update.testEnableCancel": "Cancelar",
+  "update.testLabel": "prueba {c}"
 }
