@@ -67,7 +67,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          PREV=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)
+          # HEAD^: when HEAD itself carries the release tag, list the commits since the tag before it.
+          PREV=$(git describe --tags --abbrev=0 --match 'v*' HEAD^ 2>/dev/null || true)
           {
             echo "version: $(node -p "require('./package.json').version")"
             echo "commit: $GITHUB_SHA"
