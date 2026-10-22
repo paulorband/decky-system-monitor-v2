@@ -1,6 +1,6 @@
 # Spec 007 — Multi-idioma
 
-- **Status:** Concluída — validada no Ally X; pendente: AC-7 (idioma escolhido persiste após reiniciar)
+- **Status:** Concluída — validada no Ally X
 - **Depende de:** 002, 003, 005, 006
 
 ## Contexto
@@ -49,7 +49,7 @@ e permitir trocar manualmente. Adicionar um idioma novo deve exigir só um arqui
 - [x] **AC-5** `pnpm typecheck` e `pnpm build` passam.
 - [x] **AC-6** No Ally X, com a Steam em português, o plugin abre em pt-BR; mudando para inglês no seletor, painel e
   tela de processos mudam na hora. _(validado no Ally X, 2026-10-14)_
-- [ ] **AC-7** A escolha de idioma persiste após reiniciar. _(validar no aparelho)_
+- [x] **AC-7** A escolha de idioma persiste após reiniciar. _(validado no Ally X, 2026-10-21)_
 
 ## Design
 - `rollup.config.js` — plugin `ssm-locales` resolve `virtual:locales` lendo `src/locales/*.json` (com watch).
