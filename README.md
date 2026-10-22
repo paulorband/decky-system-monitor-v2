@@ -132,4 +132,4 @@ Outras opções (`node scripts/bash.mjs scripts/deploy.sh --help`):
 
 ## Licença
 
-BSD-3-Clause
+GPL-3.0-or-later — veja [LICENSE](LICENSE).

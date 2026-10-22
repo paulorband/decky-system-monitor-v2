@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Decky Loader plugin: system resource monitor and process manager for Game Mode",
   "type": "module",
-  "license": "BSD-3-Clause",
+  "license": "GPL-3.0-or-later",
   "packageManager": "pnpm@12.11.2",
   "scripts": {
     "build": "rollup -c",
