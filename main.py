@@ -38,6 +38,14 @@ def _settings_path() -> str:
     return os.path.join(_settings_dir(), "settings.json")
 
 
+def _rollback_dir() -> str:
+    """Spec 009 REQ-700: outside the plugin folder, so Decky never loads it as a plugin."""
+    return os.path.join(_settings_dir(), "rollback")
+
+
+CHANGELOG_MAX = 64 * 1024  # spec 009 REQ-723
+
+
 def _test_channel() -> bool:
     """REQ-655: the channel comes from our own persisted settings, never from the frontend."""
     try:
@@ -124,7 +132,7 @@ class Plugin:
             cache = getattr(self, "http_cache", None)
             loop = asyncio.get_running_loop()
             version = await loop.run_in_executor(
-                None, lambda: updater.install(PLUGIN_DIR, test_channel=test, cache=cache))
+                None, lambda: updater.install(PLUGIN_DIR, test_channel=test, cache=cache, rollback_dir=_rollback_dir()))
         except Exception as e:
             decky.logger.exception("install_update failed")
             return {"ok": False, "error": _err(e)}
@@ -134,3 +142,37 @@ class Plugin:
         log_dir = getattr(decky, "DECKY_PLUGIN_LOG_DIR", None) or "/tmp"
         updater.schedule_decky_restart(os.path.join(log_dir, "restart.log"))  # REQ-636
         return {"ok": True, "version": version}
+
+    # ------------------------------------------------------------ rollback & changelog (spec 009)
+
+    async def get_rollback_info(self):
+        try:
+            return updater.rollback_info(PLUGIN_DIR, _rollback_dir())
+        except Exception:
+            decky.logger.exception("get_rollback_info failed")
+            return None
+
+    async def rollback(self) -> dict:
+        global _installing
+        if _installing:  # REQ-712: shares the install lock
+            return {"ok": False, "error": "busy"}
+        _installing = True
+        try:
+            loop = asyncio.get_running_loop()
+            version = await loop.run_in_executor(None, lambda: updater.rollback(PLUGIN_DIR, _rollback_dir()))
+        except Exception as e:
+            decky.logger.exception("rollback failed")
+            return {"ok": False, "error": _err(e)}
+        finally:
+            _installing = False
+        decky.logger.info("rolled back to %s; restarting Decky", version)
+        log_dir = getattr(decky, "DECKY_PLUGIN_LOG_DIR", None) or "/tmp"
+        updater.schedule_decky_restart(os.path.join(log_dir, "restart.log"))
+        return {"ok": True, "version": version}
+
+    async def get_changelog(self) -> str:
+        try:
+            with open(os.path.join(PLUGIN_DIR, "CHANGELOG.md"), encoding="utf-8", errors="replace") as f:
+                return f.read(CHANGELOG_MAX)
+        except OSError:
+            return ""

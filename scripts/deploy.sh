@@ -21,6 +21,7 @@ Opções:
   --skip-build     não roda 'pnpm build'
   --no-restart     não reinicia o plugin_loader após instalar
   --logs           acompanha o log do Decky (journalctl) após o deploy
+  --rollback       não envia nada: restaura no aparelho a versão anterior guardada e reinicia o Decky
   --host HOST      sobrescreve DECK_HOST
   --user USER      sobrescreve DECK_USER
   -h, --help       mostra esta ajuda
@@ -43,10 +44,11 @@ DECK_PORT="${ENV_PORT:-${DECK_PORT:-22}}"
 DECK_KEY="${ENV_KEY:-${DECK_KEY:-}}"
 DECK_SUDO_PASS="${ENV_PASS:-${DECK_SUDO_PASS:-}}"
 
-PACKAGE_ONLY=0; SKIP_BUILD=0; RESTART=1; FOLLOW_LOGS=0
+PACKAGE_ONLY=0; SKIP_BUILD=0; RESTART=1; FOLLOW_LOGS=0; ROLLBACK=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --package-only) PACKAGE_ONLY=1 ;;
+    --rollback) ROLLBACK=1 ;;
     --skip-build) SKIP_BUILD=1 ;;
     --no-restart) RESTART=0 ;;
     --logs) FOLLOW_LOGS=1 ;;
@@ -61,6 +63,40 @@ done
 if [[ $PACKAGE_ONLY -eq 0 ]]; then
   [[ -n "$DECK_HOST" ]] || die "DECK_HOST não definido. Copie .env.deploy.example para .env.deploy e preencha."
   [[ -n "$DECK_USER" ]] || die "DECK_USER não definido em .env.deploy."
+fi
+
+SSH_OPTS=(-p "$DECK_PORT" -o ConnectTimeout=10)
+SCP_OPTS=(-P "$DECK_PORT" -o ConnectTimeout=10)
+if [[ -n "$DECK_KEY" ]]; then
+  SSH_OPTS+=(-i "$DECK_KEY")
+  SCP_OPTS+=(-i "$DECK_KEY")
+fi
+TARGET="$DECK_USER@$DECK_HOST"
+REMOTE_TMP="/tmp/$PLUGIN_NAME-deploy"
+
+# Runs `$1` on the device with sudo (password from DECK_SUDO_PASS via stdin, or interactive).
+remote_sudo() {
+  if [[ -n "$DECK_SUDO_PASS" ]]; then
+    printf '%s\n' "$DECK_SUDO_PASS" | ssh "${SSH_OPTS[@]}" "$TARGET" "sudo -S -p '' $1"
+  else
+    ssh -t "${SSH_OPTS[@]}" "$TARGET" "sudo $1"
+  fi
+}
+
+upload() {
+  ssh "${SSH_OPTS[@]}" "$TARGET" "mkdir -p $REMOTE_TMP" || die "falha ao conectar em $TARGET (SSH ativo? chave configurada?)"
+  scp -q "${SCP_OPTS[@]}" "$@" "$TARGET:$REMOTE_TMP/"
+}
+
+# ---------------------------------------------------------------- rollback (spec 009 REQ-714)
+
+if [[ $ROLLBACK -eq 1 ]]; then
+  log "Restaurando a versão anterior em $TARGET"
+  upload scripts/remote-rollback.sh
+  # $HOME is expanded by the remote user's shell before sudo (sudo may reset HOME to /root).
+  remote_sudo "bash $REMOTE_TMP/remote-rollback.sh '$PLUGIN_NAME' \"\$HOME/homebrew/plugins\" $RESTART; rm -rf $REMOTE_TMP"
+  log "Rollback concluído em $TARGET"
+  exit 0
 fi
 
 # ---------------------------------------------------------------- build
@@ -79,6 +115,7 @@ mkdir -p "$STAGE/dist"
 cp dist/index.js "$STAGE/dist/"
 cp main.py plugin.json package.json LICENSE "$STAGE/"
 [[ -f README.md ]] && cp README.md "$STAGE/"
+[[ -f CHANGELOG.md ]] && cp CHANGELOG.md "$STAGE/"
 cp -r py_modules "$STAGE/"
 find "$STAGE" -name '__pycache__' -type d -prune -exec rm -rf {} +
 # Build identity (spec 008 REQ-652): lets the updater tell builds of the same version apart.
@@ -111,28 +148,11 @@ TARBALL="$OUT_DIR/$PLUGIN_NAME.tar.gz"
 
 # ---------------------------------------------------------------- deploy
 
-SSH_OPTS=(-p "$DECK_PORT" -o ConnectTimeout=10)
-SCP_OPTS=(-P "$DECK_PORT" -o ConnectTimeout=10)
-if [[ -n "$DECK_KEY" ]]; then
-  SSH_OPTS+=(-i "$DECK_KEY")
-  SCP_OPTS+=(-i "$DECK_KEY")
-fi
-TARGET="$DECK_USER@$DECK_HOST"
-REMOTE_TMP="/tmp/$PLUGIN_NAME-deploy"
-
 log "Enviando para $TARGET"
-ssh "${SSH_OPTS[@]}" "$TARGET" "mkdir -p $REMOTE_TMP" || die "falha ao conectar em $TARGET (SSH ativo? chave configurada?)"
-scp -q "${SCP_OPTS[@]}" "$TARBALL" scripts/remote-install.sh "$TARGET:$REMOTE_TMP/"
-
-# $HOME is expanded by the remote user's shell before sudo (sudo may reset HOME to /root).
-REMOTE_CMD="bash $REMOTE_TMP/remote-install.sh '$PLUGIN_NAME' \"\$HOME/homebrew/plugins\" '$REMOTE_TMP/$PLUGIN_NAME.tar.gz' $RESTART"
+upload "$TARBALL" scripts/remote-install.sh
 
 log "Instalando (sudo)"
-if [[ -n "$DECK_SUDO_PASS" ]]; then
-  printf '%s\n' "$DECK_SUDO_PASS" | ssh "${SSH_OPTS[@]}" "$TARGET" "sudo -S -p '' $REMOTE_CMD"
-else
-  ssh -t "${SSH_OPTS[@]}" "$TARGET" "sudo $REMOTE_CMD"
-fi
+remote_sudo "bash $REMOTE_TMP/remote-install.sh '$PLUGIN_NAME' \"\$HOME/homebrew/plugins\" '$REMOTE_TMP/$PLUGIN_NAME.tar.gz' $RESTART"
 
 log "Deploy concluído em $TARGET"
 

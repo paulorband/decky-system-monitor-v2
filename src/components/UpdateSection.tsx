@@ -2,7 +2,8 @@ import { ButtonItem, ConfirmModal, Field, Focusable, PanelSection, PanelSectionR
 import { ReactNode } from "react";
 import { COLORS } from "../format";
 import { t } from "../i18n";
-import { useBackendSettings, useUpdates } from "../updates";
+import { getChangelog, useBackendSettings, useUpdates } from "../updates";
+import { showChangelog } from "./ChangelogModal";
 
 const AMBER = "#ffb300";
 
@@ -70,7 +71,7 @@ export function UpdateSettings({ onChannelChange }: { onChannelChange: () => voi
 
 /** "Updates" section, always at the end of the panel (REQ-620). */
 export function UpdateSection({ u }: { u: ReturnType<typeof useUpdates> }) {
-  const { state, busy, message, check, install } = u;
+  const { state, busy, message, previous, check, install, rollback } = u;
   const isTest = state?.latest_kind === "test";
   const current = state
     ? `v${state.current}` +
@@ -107,6 +108,52 @@ export function UpdateSection({ u }: { u: ReturnType<typeof useUpdates> }) {
           </ButtonItem>
         )}
       </PanelSectionRow>
+      {state?.available && (
+        <PanelSectionRow>
+          <ButtonItem
+            layout="below"
+            onClick={() => showChangelog(t("update.whatsNew", { v: `v${state.latest}` }), state.notes ?? "")}
+          >
+            {t("update.whatsNew", { v: `v${state.latest}` })}
+          </ButtonItem>
+        </PanelSectionRow>
+      )}
+      <PanelSectionRow>
+        <ButtonItem
+          layout="below"
+          onClick={() => getChangelog().then((md) => showChangelog(t("update.history"), md)).catch(() => {})}
+        >
+          {t("update.history")}
+        </ButtonItem>
+      </PanelSectionRow>
+      {previous && (
+        <>
+          <Row label={t("update.previous")} color={previous.kind === "test" ? AMBER : undefined}>
+            v{previous.version}
+            {previous.kind === "test" && previous.commit ? ` · ${t("update.testLabel", { c: previous.commit })}` : ""}
+          </Row>
+          <PanelSectionRow>
+            <ButtonItem
+              layout="below"
+              disabled={busy !== null}
+              onClick={() =>
+                // Spec 009 REQ-710: restoring needs an explicit confirmation.
+                showModal(
+                  <ConfirmModal
+                    strTitle={t("update.rollbackTitle", { v: `v${previous.version}` })}
+                    strDescription={t("update.rollbackWarning", { v: `v${previous.version}` })}
+                    strOKButtonText={t("update.rollbackConfirm")}
+                    strCancelButtonText={t("update.testEnableCancel")}
+                    onOK={rollback}
+                  />,
+                )
+              }
+            >
+              {busy === "rollback" ? t("update.rollingBack") : t("update.rollback", { v: `v${previous.version}` })}
+            </ButtonItem>
+          </PanelSectionRow>
+        </>
+      )}
     </PanelSection>
   );
 }

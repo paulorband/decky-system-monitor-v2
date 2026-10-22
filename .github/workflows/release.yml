@@ -1,5 +1,6 @@
-# Build & release (specs/008-auto-atualizacao, REQ-640/652), ported from the previous plugin.
-# - push of a tag vX.Y.Z  -> versioned release with steam-system-monitor.zip (tag must match package.json)
+# Build & release (specs/008-auto-atualizacao REQ-640/652, specs/009-rollback-changelog REQ-721).
+# - push of a tag vX.Y.Z  -> versioned release with steam-system-monitor.zip; notes = CHANGELOG.md section
+#                            (fails when the tag != package.json version or the section is missing)
 # - push to a branch      -> rolling "test-build" prerelease (opt-in test channel, REQ-650)
 name: Build & release
 
@@ -22,6 +23,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # tags + history for the test-build commit list
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
@@ -51,19 +54,31 @@ jobs:
           PKG="v$(node -p "require('./package.json').version")"
           if [ "$VERSION" != "$PKG" ]; then echo "tag $VERSION != package.json $PKG"; exit 1; fi
           if gh release view "$VERSION" >/dev/null 2>&1; then echo "$VERSION already exists"; exit 0; fi
+          node scripts/changelog-section.mjs "$VERSION" > release-notes.md
           flags=""
           case "$VERSION" in *-*) flags="--prerelease";; esac
           gh release create "$VERSION" out/steam-system-monitor.zip \
-            --target "$GITHUB_SHA" --title "$VERSION" --generate-notes $flags
+            --target "$GITHUB_SHA" --title "$VERSION" --notes-file release-notes.md $flags
 
       # Branch push / manual run -> rolling "test-build" prerelease for device testing.
+      # The updater reads the "version:" and "commit:" lines; the commit list is for people.
       - name: Publish rolling test build
         if: ${{ !startsWith(github.ref, 'refs/tags/') && inputs.version == '' }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          PREV=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)
+          {
+            echo "version: $(node -p "require('./package.json').version")"
+            echo "commit: $GITHUB_SHA"
+            echo
+            echo "Automatic TEST build from \`$GITHUB_REF_NAME\`. Not a stable release: may contain bugs."
+            echo
+            echo "### Commits since ${PREV:-the first commit}"
+            git log --no-merges --pretty='- %s (%h)' ${PREV:+$PREV..}HEAD | head -50
+          } > test-notes.md
           gh release delete test-build --cleanup-tag --yes || true
           gh release create test-build out/steam-system-monitor.zip \
             --prerelease --target "$GITHUB_SHA" \
             --title "Test build ($GITHUB_REF_NAME @ ${GITHUB_SHA::7})" \
-            --notes "$(printf 'version: %s\ncommit: %s\n\nAutomatic TEST build from `%s`. Not a stable release: may contain bugs.' "$(node -p "require('./package.json').version")" "$GITHUB_SHA" "$GITHUB_REF_NAME")"
+            --notes-file test-notes.md

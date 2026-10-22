@@ -19,5 +19,6 @@ Nova funcionalidade = nova spec em `specs/NNN-nome/spec.md`; um commit por spec 
 - `main.py` — entrada do backend Decky (fino, delega para `py_modules/sysmon`)
 - `py_modules/sysmon/` — coleta de métricas e processos (stdlib apenas)
 - `src/` — frontend React (`@decky/ui`, `@decky/api`); textos em `src/locales/<código>.json` via `t()` de `src/i18n.ts` (nada de texto fixo nos componentes)
-- `py_modules/sysmon/updater.py` — auto-atualização via GitHub Releases (spec 008); releases saem de `.github/workflows/release.yml` ao enviar tag `vX.Y.Z` igual à versão do `package.json`
+- `py_modules/sysmon/updater.py` — auto-atualização via GitHub Releases (spec 008); releases saem de `.github/workflows/release.yml` ao enviar tag `vX.Y.Z` igual à versão do `package.json`; rollback e changelog (spec 009)
+- `CHANGELOG.md` — toda release precisa da seção `## [X.Y.Z]` (vira a nota da release; `scripts/changelog-section.mjs`)
 - `scripts/deploy.sh` — empacotamento (grava `build.json`) e deploy SSH (`scripts/bash.mjs` acha o Git Bash no Windows; o `bash` do PATH é o WSL)

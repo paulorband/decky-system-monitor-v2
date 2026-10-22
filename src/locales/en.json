@@ -99,5 +99,17 @@
   "update.testEnableTitle": "Enable test builds?",
   "update.testEnableOk": "Enable",
   "update.testEnableCancel": "Cancel",
-  "update.testLabel": "test {c}"
+  "update.testLabel": "test {c}",
+  "update.whatsNew": "What's new in {v}",
+  "update.history": "Version history",
+  "update.noNotes": "No release notes.",
+  "update.close": "Close",
+  "update.previous": "Previous version",
+  "update.rollback": "Roll back to {v}",
+  "update.rollbackTitle": "Roll back to {v}?",
+  "update.rollbackWarning": "The current version will be replaced by {v} and Decky will restart. You can update again later.",
+  "update.rollbackConfirm": "Roll back",
+  "update.rollingBack": "Restoring…",
+  "update.rollbackOk": "Restored {v}. Decky is restarting to load it…",
+  "update.rollbackFailed": "Rollback failed: {e}"
 }

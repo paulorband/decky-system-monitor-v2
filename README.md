@@ -39,8 +39,17 @@ pelo controle; o Decky reinicia sozinho para carregar a nova versão.
 - A instalação confere origem, SHA-256 do arquivo e conteúdo do zip, e restaura a versão anterior se algo falhar.
 - **Incluir builds de teste** (desligado por padrão) oferece o build automático do último commit — pode conter erros.
 - Por isso o backend roda como root (`flags: ["root"]`): a pasta `~/homebrew/plugins` pertence ao root.
+- **Novidades da vX** mostra as notas da versão antes de instalar; **Histórico de versões** mostra o
+  [CHANGELOG](CHANGELOG.md) inteiro.
+- **Voltar para a versão anterior:** antes de cada atualização (e de cada deploy por SSH) a versão instalada é
+  guardada; em *Atualizações → Voltar para vX* ela é restaurada. Se o plugin nem abrir, restaure pelo computador:
 
-**Publicar uma versão:** atualize `version` no `package.json`, faça o commit e envie a tag correspondente:
+```bash
+node scripts/bash.mjs scripts/deploy.sh --rollback
+```
+
+**Publicar uma versão:** atualize `version` no `package.json`, escreva a seção `## [X.Y.Z] - data` no
+[CHANGELOG.md](CHANGELOG.md) (vira a nota da release; sem ela o CI recusa), faça o commit e envie a tag:
 
 ```bash
 git tag v0.2.0

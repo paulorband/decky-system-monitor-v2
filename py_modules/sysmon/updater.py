@@ -26,7 +26,9 @@ DOWNLOAD_PREFIX = f"https://github.com/{REPO}/releases/download/"
 ASSET_NAME = "steam-system-monitor.zip"
 ZIP_ROOT = "steam-system-monitor"
 PLUGIN_NAME = "System Monitor"
-PAYLOAD = ("plugin.json", "package.json", "main.py", "LICENSE", "README.md", "build.json", "dist", "py_modules")
+PAYLOAD = ("plugin.json", "package.json", "main.py", "LICENSE", "README.md", "CHANGELOG.md", "build.json", "dist",
+           "py_modules")
+NOTES_MAX = 8000  # spec 009 REQ-722
 MAX_ZIP = 10 * 1024 * 1024
 MAX_UNPACKED = 30 * 1024 * 1024
 TIMEOUT = 10
@@ -262,7 +264,7 @@ def stable_from(releases) -> Optional[Dict[str, Any]]:
             continue
         commit = r.get("target_commitish")
         info = {"tag": tag, "version": tag.lstrip("v"), "asset_url": None, "digest": None, "kind": "stable",
-                "commit": commit if _SHA.match(commit or "") else None}
+                "commit": commit if _SHA.match(commit or "") else None, "notes": r.get("body") or ""}
         return _asset(r, info)
     return None
 
@@ -278,7 +280,8 @@ def test_from(releases) -> Optional[Dict[str, Any]]:
         commit = m.group(1) if m else (tc if _SHA.match(tc or "") else None)
         v = _BODY_VERSION.search(body)
         version = v.group(1) if v and parse_version(v.group(1)) else None
-        info = {"tag": TEST_TAG, "version": version, "asset_url": None, "digest": None, "kind": "test", "commit": commit}
+        info = {"tag": TEST_TAG, "version": version, "asset_url": None, "digest": None, "kind": "test", "commit": commit,
+                "notes": body}
         return _asset(r, info)
     return None
 
@@ -361,8 +364,11 @@ def _copy(src: str, dst: str) -> None:
         shutil.copy2(src, dst)
 
 
-def apply_package(root: str, plugin_dir: str) -> None:
-    """REQ-635: replace payload items; restore the backup on any failure."""
+def apply_package(root: str, plugin_dir: str, exact: bool = False) -> None:
+    """REQ-635: replace payload items; restore the backup on any failure.
+
+    exact=True (spec 009 REQ-710) also removes payload items that `root` lacks, so a rollback to an older
+    version does not keep files only the newer one had (e.g. build.json)."""
     backup = tempfile.mkdtemp(prefix="ssm-bak-", dir=os.path.dirname(os.path.abspath(plugin_dir)))
     try:
         for item in PAYLOAD:
@@ -372,10 +378,12 @@ def apply_package(root: str, plugin_dir: str) -> None:
         try:
             for item in PAYLOAD:
                 src = os.path.join(root, item)
+                dst = os.path.join(plugin_dir, item)
                 if os.path.lexists(src):
-                    dst = os.path.join(plugin_dir, item)
                     _remove(dst)
                     _copy(src, dst)
+                elif exact:
+                    _remove(dst)
         except Exception:
             for item in PAYLOAD:
                 _remove(os.path.join(plugin_dir, item))
@@ -427,6 +435,7 @@ def resolve(plugin_dir: str, urlopen: Callable = urllib.request.urlopen, test_ch
         state["available"] = True
         state["latest"] = chosen["version"] or current
         state["latest_kind"] = chosen["kind"]
+        state["notes"] = (chosen.get("notes") or "")[:NOTES_MAX]  # spec 009 REQ-722
         if chosen["kind"] == "test":
             state["commit"] = chosen["commit"][:7]
     if not build["kind"] and build["commit"]:  # REQ-663: manual install -> infer from the commit
@@ -444,11 +453,64 @@ def check(plugin_dir: str, urlopen: Callable = urllib.request.urlopen, test_chan
     return resolve(plugin_dir, urlopen, test_channel, cache)[0]
 
 
-def install(plugin_dir: str, urlopen: Callable = urllib.request.urlopen, test_channel: bool = False,
-            cache: Optional[HttpCache] = None) -> str:
-    """REQ-630/655: refetch, require something new, download, verify, validate, apply. Returns the version."""
+def _require_writable(plugin_dir: str) -> None:
+    """REQ-638 (and spec 009 REQ-712): fail before touching anything."""
     if not os.access(plugin_dir, os.W_OK) or not os.access(os.path.dirname(os.path.abspath(plugin_dir)), os.W_OK):
         raise UpdateError("plugin folder is not writable: the backend must run as root (plugin.json flags)")
+
+
+# --- rollback (spec 009) ---
+def save_rollback(plugin_dir: str, rollback_dir: str) -> None:
+    """REQ-700: keep a full copy of the installed version; built aside and swapped in at the end."""
+    parent = os.path.dirname(os.path.abspath(rollback_dir))
+    os.makedirs(parent, exist_ok=True)
+    staging = tempfile.mkdtemp(prefix="ssm-rb-", dir=parent)
+    try:
+        for item in PAYLOAD:
+            cur = os.path.join(plugin_dir, item)
+            if os.path.lexists(cur):
+                _copy(cur, os.path.join(staging, item))
+        old = rollback_dir + ".old"
+        _remove(old)
+        if os.path.lexists(rollback_dir):
+            os.replace(rollback_dir, old)
+        os.replace(staging, rollback_dir)
+        _remove(old)
+    except Exception:
+        shutil.rmtree(staging, ignore_errors=True)
+        raise
+
+
+def rollback_info(plugin_dir: str, rollback_dir: Optional[str]) -> Optional[Dict[str, Any]]:
+    """REQ-703: the saved copy, or None when missing, invalid or identical to the installed version."""
+    if not rollback_dir or not os.path.isdir(rollback_dir):
+        return None
+    try:
+        validate(rollback_dir)
+    except UpdateError:
+        return None
+    version, build = read_version(rollback_dir), read_build(rollback_dir)
+    current, current_build = read_version(plugin_dir), read_build(plugin_dir)
+    if version == current and build["commit"] == current_build["commit"]:
+        return None
+    return {"version": version, "commit": build["commit"][:7] if build["commit"] else None, "kind": build["kind"]}
+
+
+def rollback(plugin_dir: str, rollback_dir: str) -> str:
+    """REQ-710/711: restore the saved copy exactly (with REQ-635's revert-on-failure), then drop it."""
+    _require_writable(plugin_dir)
+    info = rollback_info(plugin_dir, rollback_dir)
+    if info is None:
+        raise UpdateError("no previous version to restore")
+    apply_package(rollback_dir, plugin_dir, exact=True)
+    shutil.rmtree(rollback_dir, ignore_errors=True)
+    return info["version"]
+
+
+def install(plugin_dir: str, urlopen: Callable = urllib.request.urlopen, test_channel: bool = False,
+            cache: Optional[HttpCache] = None, rollback_dir: Optional[str] = None) -> str:
+    """REQ-630/655: refetch, require something new, download, verify, validate, apply. Returns the version."""
+    _require_writable(plugin_dir)
     state, info = resolve(plugin_dir, urlopen, test_channel, cache)
     if info is None:
         if state.get("retry_minutes"):
@@ -460,6 +522,11 @@ def install(plugin_dir: str, urlopen: Callable = urllib.request.urlopen, test_ch
         root = safe_extract(data, tmp)
         # stable: the package must be exactly the release; test: only well-formed
         validate(root, info["version"] if info["kind"] == "stable" else None)
+        if rollback_dir:  # spec 009 REQ-700/701: no update without a way back
+            try:
+                save_rollback(plugin_dir, rollback_dir)
+            except OSError as e:
+                raise UpdateError(f"could not save the rollback copy: {e}") from e
         apply_package(root, plugin_dir)
         _stamp_kind(plugin_dir, info["kind"])  # REQ-663
     finally:

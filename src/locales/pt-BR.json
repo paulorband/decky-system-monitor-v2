@@ -100,5 +100,17 @@
   "update.testEnableTitle": "Ativar builds de teste?",
   "update.testEnableOk": "Ativar",
   "update.testEnableCancel": "Cancelar",
-  "update.testLabel": "teste {c}"
+  "update.testLabel": "teste {c}",
+  "update.whatsNew": "Novidades da {v}",
+  "update.history": "Histórico de versões",
+  "update.noNotes": "Sem notas desta versão.",
+  "update.close": "Fechar",
+  "update.previous": "Versão anterior",
+  "update.rollback": "Voltar para {v}",
+  "update.rollbackTitle": "Voltar para {v}?",
+  "update.rollbackWarning": "A versão atual será substituída pela {v} e o Decky será reiniciado. Você pode atualizar de novo depois.",
+  "update.rollbackConfirm": "Voltar",
+  "update.rollingBack": "Restaurando…",
+  "update.rollbackOk": "{v} restaurada. O Decky está reiniciando para carregá-la…",
+  "update.rollbackFailed": "Falha ao voltar de versão: {e}"
 }
