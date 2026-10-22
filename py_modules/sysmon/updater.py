@@ -23,6 +23,12 @@ TEST_TAG = "test-build"
 # REQ-660: one request covers both the latest stable release and the rolling test build.
 API_RELEASES = f"https://api.github.com/repos/{REPO}/releases?per_page=15"
 DOWNLOAD_PREFIX = f"https://github.com/{REPO}/releases/download/"
+# Spec 010: release manifests are plain release assets, outside the 60 req/h unauthenticated API limit.
+MANIFEST_NAME = "release.json"
+STABLE_MANIFEST = f"https://github.com/{REPO}/releases/latest/download/{MANIFEST_NAME}"
+TEST_MANIFEST = f"{DOWNLOAD_PREFIX}{TEST_TAG}/{MANIFEST_NAME}"
+MANIFEST_MAX = 64 * 1024
+MANIFEST_SCHEMA = 1
 ASSET_NAME = "steam-system-monitor.zip"
 ZIP_ROOT = "steam-system-monitor"
 PLUGIN_NAME = "System Monitor"
@@ -286,6 +292,52 @@ def test_from(releases) -> Optional[Dict[str, Any]]:
     return None
 
 
+_HEX64 = re.compile(r"^[0-9a-f]{64}$")
+
+
+class ManifestMissing(UpdateError):
+    """Spec 010 REQ-803: no usable release.json (older release) -> fall back to the API."""
+
+
+def fetch_manifest(url: str, kind: str, urlopen: Callable = urllib.request.urlopen) -> Dict[str, Any]:
+    """REQ-800..802: read a release.json and turn it into the same info dict the API path produces.
+
+    Network errors propagate (they must not fall back to the rate-limited API); 404 or an invalid manifest
+    raise ManifestMissing."""
+    try:
+        with _open(url, urlopen, "application/json") as r:
+            raw = r.read(MANIFEST_MAX + 1)
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            raise ManifestMissing("no release manifest") from e
+        raise
+    try:
+        if len(raw) > MANIFEST_MAX:
+            raise ValueError("manifest too large")
+        m = json.loads(raw)
+        if not isinstance(m, dict) or m.get("schema") != MANIFEST_SCHEMA:
+            raise ValueError("unknown manifest schema")
+        tag, sha, commit = m.get("tag"), str(m.get("sha256") or "").lower(), m.get("commit")
+        if kind == "stable" and not (isinstance(tag, str) and tag.startswith("v") and parse_version(tag)):
+            raise ValueError("bad stable tag")
+        if kind == "test" and tag != TEST_TAG:
+            raise ValueError("bad test tag")
+        if not _HEX64.match(sha):
+            raise ValueError("bad sha256")
+        version = m.get("version") if parse_version(m.get("version")) else None
+        if kind == "stable" and version != tag.lstrip("v"):
+            raise ValueError("version does not match tag")
+    except (ValueError, TypeError) as e:
+        raise ManifestMissing(f"invalid release manifest: {e}") from e
+    return {
+        "tag": tag, "version": version, "kind": kind,
+        "asset_url": f"{DOWNLOAD_PREFIX}{tag}/{ASSET_NAME}",  # REQ-802: built here, never read from the manifest
+        "digest": "sha256:" + sha,
+        "commit": commit if isinstance(commit, str) and _SHA.match(commit) else None,
+        "notes": m.get("notes") if isinstance(m.get("notes"), str) else "",
+    }
+
+
 def download_verified(info: Dict[str, Any], urlopen: Callable = urllib.request.urlopen) -> bytes:
     """REQ-631/632: fail closed without a matching sha256 digest."""
     url, digest = info.get("asset_url"), info.get("digest") or ""
@@ -400,6 +452,28 @@ def _err(e: Exception) -> str:
     return f"{type(e).__name__}: {e}"[:200]
 
 
+def _sources(urlopen: Callable, test_channel: bool, cache: Optional[HttpCache]):
+    """Spec 010: stable/test info from release.json; the API only for what has no manifest (REQ-803)."""
+    s = t = None
+    missing_stable = missing_test = False
+    try:
+        s = fetch_manifest(STABLE_MANIFEST, "stable", urlopen)
+    except ManifestMissing:
+        missing_stable = True
+    if test_channel:
+        try:
+            t = fetch_manifest(TEST_MANIFEST, "test", urlopen)
+        except ManifestMissing:
+            missing_test = True
+    if missing_stable or missing_test:
+        releases = fetch_releases(urlopen, cache)  # REQ-660..662 (one request, ETag, rate limit)
+        if missing_stable:
+            s = stable_from(releases)
+        if missing_test:
+            t = test_from(releases)
+    return s, t
+
+
 def resolve(plugin_dir: str, urlopen: Callable = urllib.request.urlopen, test_channel: bool = False,
             cache: Optional[HttpCache] = None):
     """REQ-600..603, 650..654, 657, 660..663. Returns (state, info-to-install-or-None); never raises."""
@@ -410,16 +484,13 @@ def resolve(plugin_dir: str, urlopen: Callable = urllib.request.urlopen, test_ch
                              **build_info(plugin_dir)}
     s = t = chosen = None
     try:
-        releases = fetch_releases(urlopen, cache)
+        s, t = _sources(urlopen, test_channel, cache)
     except RateLimited as e:
         state["error"], state["retry_minutes"] = "RateLimited", e.minutes
         return state, None
     except Exception as e:  # network, JSON...
         state["error"] = _err(e)
         return state, None
-
-    s = stable_from(releases)
-    t = test_from(releases) if test_channel else None
     if s:
         state["latest"], state["latest_kind"] = s["version"], "stable"
 

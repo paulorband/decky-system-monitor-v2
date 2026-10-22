@@ -46,9 +46,22 @@ class Resp:
         pass
 
 
-def fake_urlopen(release=None, zip_bytes=b"", test_release=None):
+def no_manifest(fn):
+    """Spec 010: releases without release.json answer 404 there, so the API path (spec 008) is used."""
+    def _open(req, timeout=None, context=None):
+        if req.full_url.endswith("/" + updater.MANIFEST_NAME):
+            raise http_error(404, {}, "Not Found")
+        return fn(req, timeout, context)
+    return _open
+
+
+def fake_urlopen(release=None, zip_bytes=b"", test_release=None, manifests=None):
     def _open(req, timeout=None, context=None):
         url = req.full_url
+        if url.endswith("/" + updater.MANIFEST_NAME):
+            if manifests and url in manifests:
+                return Resp(manifests[url] if isinstance(manifests[url], bytes) else json.dumps(manifests[url]).encode())
+            raise http_error(404, {}, "Not Found")
         if url == updater.API_RELEASES:  # REQ-660: one call lists stable + test-build
             items = [x for x in (test_release, release) if x is not None]
             if not items:
@@ -480,7 +493,7 @@ def test_single_api_request_per_check_REQ660(tmp_path):
         return inner(req, timeout, context)
 
     updater.check(d, counting, test_channel=True)
-    assert calls == [updater.API_RELEASES]  # was two calls with the test channel on
+    assert calls.count(updater.API_RELEASES) == 1  # was two calls with the test channel on
 
 
 def test_rate_limited_is_reported_with_minutes_REQ662(tmp_path):
@@ -490,6 +503,7 @@ def test_rate_limited_is_reported_with_minutes_REQ662(tmp_path):
     def limited(req, timeout=None, context=None):
         raise http_error(403, {"X-RateLimit-Remaining": "0", "X-RateLimit-Reset": reset})
 
+    limited = no_manifest(limited)
     st = updater.check(d, limited)
     assert st["error"] == "RateLimited" and 9 <= st["retry_minutes"] <= 11 and not st["available"]
     with pytest.raises(updater.RateLimited):
@@ -508,6 +522,7 @@ def test_rate_limit_detected_by_message_and_429_but_not_other_403_REQ662(tmp_pat
     def forbidden(req, timeout=None, context=None):
         raise http_error(403, {"X-RateLimit-Remaining": "50"}, "Forbidden")
 
+    by_reason, too_many, forbidden = no_manifest(by_reason), no_manifest(too_many), no_manifest(forbidden)
     assert updater.check(d, by_reason)["error"] == "RateLimited"
     st = updater.check(d, too_many)
     assert st["error"] == "RateLimited" and st["retry_minutes"] == 2
@@ -522,6 +537,8 @@ def test_etag_cache_serves_304_without_a_body_REQ661(tmp_path):
     inner = fake_urlopen(release(z), z)
 
     def server(req, timeout=None, context=None):
+        if req.full_url != updater.API_RELEASES:
+            return inner(req, timeout, context)
         sent.append(req.get_header("If-none-match"))
         if req.get_header("If-none-match") == '"v1"':
             raise http_error(304, {}, "Not Modified")

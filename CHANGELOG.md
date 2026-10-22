@@ -3,6 +3,17 @@
 Todas as mudanças relevantes deste plugin. Formato baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/);
 versões seguem [SemVer](https://semver.org/lang/pt-BR/). As notas de cada release do GitHub são a seção da versão.
 
+## [0.4.0] - 2026-10-22
+
+### Correções
+- A verificação de atualizações não esbarra mais em "Limite de requisições do GitHub atingido": o plugin lê um
+  pequeno arquivo `release.json` publicado em cada release, fora da API do GitHub (que permite só 60 consultas por
+  hora para toda a rede). A API fica só como reserva para releases antigas.
+
+### Observações
+- Para chegar a esta versão, quem está na 0.3.0 ou anterior ainda usa a API uma última vez; se aparecer o aviso de
+  limite, aguarde o tempo indicado e verifique de novo.
+
 ## [0.3.0] - 2026-10-22
 
 ### Novidades

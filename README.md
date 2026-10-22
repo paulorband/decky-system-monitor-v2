@@ -33,7 +33,8 @@ CPU % de um processo é relativo à máquina inteira (100% = todos os núcleos o
 ## Atualizações
 
 O plugin verifica as [releases do GitHub](https://github.com/paulorband/decky-system-monitor-v2/releases) ao iniciar
-e avisa com uma notificação quando há versão nova. Em **Atualizações** (fim do painel) dá para verificar e instalar
+e avisa com uma notificação quando há versão nova. A verificação lê o `release.json` de cada release, sem usar a API
+do GitHub (limitada a 60 consultas/hora por rede). Em **Atualizações** (fim do painel) dá para verificar e instalar
 pelo controle; o Decky reinicia sozinho para carregar a nova versão.
 
 - A instalação confere origem, SHA-256 do arquivo e conteúdo do zip, e restaura a versão anterior se algo falhar.

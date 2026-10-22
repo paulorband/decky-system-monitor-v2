@@ -73,6 +73,9 @@ Repositório `paulorband/decky-system-monitor-v2`. Asset de cada release: `steam
 - **REQ-657** `test-build` do mesmo commit da estável mais recente é tratado como a estável.
 
 ### Limite do GitHub e identidade
+> A partir da spec 010 a verificação usa o `release.json` de cada release; os REQ-660..662 abaixo valem só para a
+> reserva pela API (releases sem manifesto).
+
 - **REQ-660** Uma única chamada `GET /repos/…/releases?per_page=15` por verificação.
 - **REQ-661** Cache `ETag` em disco (`http-cache.json`); `304` não conta no limite.
 - **REQ-662** Limite atingido (403 com limite zerado, ou 429) → `error = "RateLimited"` + `retry_minutes`; UI mostra
